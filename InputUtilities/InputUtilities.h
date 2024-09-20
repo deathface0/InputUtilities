@@ -39,12 +39,12 @@ public:
 	bool ExtraClickUp(int button);
 	bool MouseWheelRoll(int scrolls, int delta);
 
-	bool vkKeyDown(WORD vkCode);
-	bool vkKeyUp(WORD vkCode);
+	bool vkKeyDown(char vkCode);
+	bool vkKeyUp(char vkCode);
 	bool KeyDown(char key);
 	bool KeyUp(char key);
-	bool vkMultiKeyDown(const std::vector<WORD>& vkCodes);
-	bool vkMultiKeyUp(const std::vector<WORD>& vkCodes);
+	bool vkMultiKeyDown(const std::vector<char>& vkCodes);
+	bool vkMultiKeyUp(const std::vector<char>& vkCodes);
 
 	void reset();
 

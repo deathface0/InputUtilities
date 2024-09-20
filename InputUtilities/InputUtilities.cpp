@@ -90,13 +90,14 @@ bool InputUtilitiesCore::MouseWheelRoll(int scrolls, int delta)
     return SendInput(1, &input, sizeof(INPUT));
 }
 
-bool InputUtilitiesCore::vkKeyDown(WORD vkCode)
+bool InputUtilitiesCore::vkKeyDown(char vkCode)
 {
-    Event c_event{ -1, vkCode, -1 };
+    char vk = static_cast<WORD>(toupper(vkCode));
+    Event c_event{ -1, vk, -1 };
 
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
-    input.ki.wVk = vkCode;
+    input.ki.wVk = vk;
     input.ki.dwFlags = 0;
     bool success = SendInput(1, &input, sizeof(INPUT));
 
@@ -106,25 +107,28 @@ bool InputUtilitiesCore::vkKeyDown(WORD vkCode)
     return success;
 }
 
-bool InputUtilitiesCore::vkKeyUp(WORD vkCode)
+bool InputUtilitiesCore::vkKeyUp(char vkCode)
 {
+    char vk = static_cast<WORD>(toupper(vkCode));
+
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
-    input.ki.wVk = vkCode;
+    input.ki.wVk = vk;
     input.ki.dwFlags = KEYEVENTF_KEYUP;
     return SendInput(1, &input, sizeof(INPUT));
 }
 
 bool InputUtilitiesCore::KeyDown(char key)
 {
-    Event c_event{ -1, -1, key };
+    char k = tolower(key);
+    Event c_event{ -1, -1, k };
 
     INPUT input;
     memset(&input, 0, sizeof(INPUT));
     input.type = INPUT_KEYBOARD;
     input.ki.dwExtraInfo = GetMessageExtraInfo();
     input.ki.wScan =
-        static_cast<WORD>(MapVirtualKeyEx(VkKeyScanA(key), MAPVK_VK_TO_VSC, GetKeyboardLayout(0)));
+        static_cast<WORD>(MapVirtualKeyEx(VkKeyScanA(k), MAPVK_VK_TO_VSC, GetKeyboardLayout(0)));
     input.ki.dwFlags = KEYEVENTF_SCANCODE;
     bool success = SendInput(1, &input, sizeof(INPUT));
 
@@ -136,17 +140,19 @@ bool InputUtilitiesCore::KeyDown(char key)
 
 bool InputUtilitiesCore::KeyUp(char key)
 {
+    char k = tolower(key);
+
     INPUT input;
     memset(&input, 0, sizeof(INPUT));
     input.type = INPUT_KEYBOARD;
     input.ki.dwExtraInfo = GetMessageExtraInfo();
     input.ki.wScan =
-        static_cast<WORD>(MapVirtualKeyEx(VkKeyScanA(key), MAPVK_VK_TO_VSC, GetKeyboardLayout(0)));
+        static_cast<WORD>(MapVirtualKeyEx(VkKeyScanA(k), MAPVK_VK_TO_VSC, GetKeyboardLayout(0)));
     input.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
     return SendInput(1, &input, sizeof(INPUT));
 }
 
-bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<WORD>& vkCodes)
+bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<char>& vkCodes)
 {
     int flag = 0;
     INPUT input;
@@ -157,9 +163,10 @@ bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<WORD>& vkCodes)
     input.ki.dwExtraInfo = 0;
 
     for (const auto& vkCode : vkCodes) {
-        Event c_event{ -1, vkCode, -1 };
+        char vk = static_cast<WORD>(toupper(vkCode));
+        Event c_event{ -1, vk, -1 };
 
-        input.ki.wVk = vkCode;
+        input.ki.wVk = vk;
         input.ki.dwFlags = 0;
         bool success = SendInput(1, &input, sizeof(INPUT));
 
@@ -173,7 +180,7 @@ bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<WORD>& vkCodes)
     return (flag == vkCodes.size()) ? true : false;
 }
 
-bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<WORD>& vkCodes)
+bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<char>& vkCodes)
 {
     int flag = 0;
     INPUT input;
@@ -184,7 +191,9 @@ bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<WORD>& vkCodes)
     input.ki.dwExtraInfo = 0;
 
     for (const auto& vkCode : vkCodes) {
-        input.ki.wVk = vkCode;
+        char vk = static_cast<WORD>(toupper(vkCode));
+
+        input.ki.wVk = vk;
         input.ki.dwFlags = KEYEVENTF_KEYUP;
         flag += SendInput(1, &input, sizeof(INPUT));
     }
