@@ -44,11 +44,13 @@ public:
 
 	bool vkKeyDown(char vkCode);
 	bool vkKeyUp(char vkCode);
-	bool KeyDown(char key);
-	bool KeyUp(char key);
+	bool mappedKeyDown(char key);
+	bool mappedKeyUp(char key);
 	bool vkMultiKeyDown(const std::vector<char>& vkCodes);
 	bool vkMultiKeyUp(const std::vector<char>& vkCodes);
-
+	bool mappedMultiKeyDown(const std::vector<char>& keys);
+	bool mappedMultiKeyUp(const std::vector<char>& keys);
+	
 private:
 	bool isUppercaseOn();
 	bool isExtraMouseButton(DWORD m_event);

@@ -162,7 +162,7 @@ bool InputUtilitiesCore::vkKeyUp(char vkCode)
     return success;
 }
 
-bool InputUtilitiesCore::KeyDown(char key)
+bool InputUtilitiesCore::mappedKeyDown(char key)
 {
     bool success = true;
     bool upper = isUppercaseOn();
@@ -198,7 +198,7 @@ bool InputUtilitiesCore::KeyDown(char key)
     return success;
 }
 
-bool InputUtilitiesCore::KeyUp(char key)
+bool InputUtilitiesCore::mappedKeyUp(char key)
 {
     char k = tolower(key);
 
@@ -257,6 +257,34 @@ bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<char>& vkCodes)
     return success;
 }
 
+bool InputUtilitiesCore::mappedMultiKeyDown(const std::vector<char>& keys)
+{
+    bool success = true;
+
+    for (const auto& key : keys) {
+        success &= this->mappedKeyDown(key);
+        if (success)
+            this->runningInputs.push_back(Event(0, (char)0, key));
+        else
+            break;
+    }
+
+    return success;
+}
+
+bool InputUtilitiesCore::mappedMultiKeyUp(const std::vector<char>& keys)
+{
+    bool success = true;
+
+    for (const auto& key : keys) {
+        success &= this->mappedKeyDown(key);
+        if (success)
+            removeEvent(Event(0, (char)0, key));
+    }
+
+    return success;
+}
+
 bool InputUtilitiesCore::isUppercaseOn()
 {
     bool isShiftPressed = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
@@ -303,7 +331,7 @@ void InputUtilitiesCore::reset()
             vkKeyUp(input.vk);
 
         if (input.key != 0)
-            KeyUp(input.key);
+            mappedKeyUp(input.key);
 
         if (input.mouse != 0)
             MouseEvent(input.mouse << 1); //Bit shift left to obtain UP equivalence
