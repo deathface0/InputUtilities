@@ -3,9 +3,10 @@
 
 int main()
 {
-	Sleep(3000);
+	Sleep(2000);
 
 	InputUtilities iu;
-	std::cout << iu.vkMultiKeyDown({ VK_CONTROL, VK_LWIN, VK_MENU, VK_SHIFT });
-	std::cout << iu.MultiKeyDown({ 'l' });
+	std::cout << iu.mappedKeyDown(VK_OEM_COMMA);
+	/*std::cout << iu.MultiKeyDown({ VK_CONTROL, VK_LWIN, VK_MENU, VK_SHIFT, 'l'});
+	std::cout << iu.MultiKeyUp({ VK_CONTROL, VK_LWIN, VK_MENU, VK_SHIFT, 'l'});*/
 }

@@ -23,10 +23,10 @@
 struct Event
 {
 	DWORD mouse;
-	char vk;
+	DWORD vk;
 	char key;
 
-	Event(DWORD mouse, char vk, char key) : mouse(mouse), vk(vk), key(key) {}
+	Event(DWORD mouse, DWORD vk, char key) : mouse(mouse), vk(vk), key(key) {}
 
 	friend std::ostream& operator<<(std::ostream& os, const Event& e);
 };
@@ -42,19 +42,23 @@ public:
 	bool ExtraClickUp(DWORD xbutton);
 	bool MouseWheelRoll(int scrolls, int delta);
 
-	bool vkKeyDown(char vkCode);
-	bool vkKeyUp(char vkCode);
+	bool vkKeyDown(DWORD vkCode);
+	bool vkKeyUp(DWORD vkCode);
 	bool mappedKeyDown(char key);
 	bool mappedKeyUp(char key);
-	bool vkMultiKeyDown(const std::vector<char>& vkCodes);
-	bool vkMultiKeyUp(const std::vector<char>& vkCodes);
+	bool vkMultiKeyDown(const std::vector<DWORD>& vkCodes);
+	bool vkMultiKeyUp(const std::vector<DWORD>& vkCodes);
 	bool mappedMultiKeyDown(const std::vector<char>& keys);
 	bool mappedMultiKeyUp(const std::vector<char>& keys);
-	
+	bool MultiKeyDown(const std::vector<DWORD>& keys);
+	bool MultiKeyUp(const std::vector<DWORD>& keys);
+
 private:
 	bool isUppercaseOn();
 	bool isExtraMouseButton(DWORD m_event);
 	bool isButtonUp(DWORD button);
+	bool isVKey(DWORD key);
+
 	bool removeEvent(const Event& e);
 	void reset();
 

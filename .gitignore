@@ -12,7 +12,7 @@
 *.exe
 *.txt
 
-./InputUtilities/Source.cpp
+*/Source.cpp
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
