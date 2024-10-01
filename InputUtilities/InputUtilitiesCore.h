@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 
 #define UP						1
 #define DOWN					-1
@@ -21,9 +22,13 @@
 
 struct Event
 {
-	DWORD mouse = 0xFF;
-	char vk = 0xFF;
-	char key = 0xFF;
+	DWORD mouse;
+	char vk;
+	char key;
+
+	Event(DWORD mouse, char vk, char key) : mouse(mouse), vk(vk), key(key) {}
+
+	friend std::ostream& operator<<(std::ostream& os, const Event& e);
 };
 
 class InputUtilitiesCore
@@ -47,6 +52,7 @@ public:
 private:
 	bool isUppercaseOn();
 	bool isExtraMouseButton(DWORD m_event);
+	bool isButtonUp(DWORD button);
 	bool removeEvent(const Event& e);
 	void reset();
 

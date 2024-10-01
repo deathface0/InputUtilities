@@ -21,9 +21,15 @@
     <ClCompile Include="InputUtilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="InputUtilitiesCore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="InputUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputUtilitiesCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

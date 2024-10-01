@@ -1,5 +1,10 @@
 #include "InputUtilitiesCore.h"
 
+std::ostream& operator<<(std::ostream& os, const Event& e) {
+    os << "{m: " << e.mouse << ", vk: " << (DWORD)(char)e.vk << ", key: " << (DWORD)(char)e.key << "}" << std::endl;
+    return os;
+}
+
 InputUtilitiesCore::~InputUtilitiesCore()
 {
     reset();
@@ -21,22 +26,29 @@ bool InputUtilitiesCore::MouseEvent(DWORD m_event)
     if (isExtraMouseButton(m_event))
         return false;
 
-    Event c_event{ m_event, 0xFF, 0xFF };
+
+    Event c_event(m_event, 0, 0);
 
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
     input.mi.dwFlags = m_event;
     bool success = SendInput(1, &input, sizeof(INPUT));
 
-    if (success)
-        //this->runningInputs.push_back(c_event); //assert
 
-        return success;
+    if (!success) 
+        return false;
+
+    if (isButtonUp(m_event))
+        removeEvent(Event(c_event.mouse >> 1, 0, 0));
+    else
+        this->runningInputs.push_back(c_event);
+
+    return success;
 }
 
 bool InputUtilitiesCore::ExtraClickDown(DWORD xbutton)
 {
-    Event c_event{ xbutton, 0xFF, 0xFF };
+    Event c_event(xbutton, 0, 0);
 
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
@@ -47,19 +59,16 @@ bool InputUtilitiesCore::ExtraClickDown(DWORD xbutton)
     input.mi.time = 0;
     input.mi.dwExtraInfo = 0;
 
-    try {
+    bool success = SendInput(1, &input, sizeof(INPUT));
+    if (success)
         this->runningInputs.push_back(c_event);
-        return SendInput(1, &input, sizeof(INPUT));
-    }
-    catch (std::exception& e)
-    {
-        return false;
-    }
+
+    return success;
 }
 
 bool InputUtilitiesCore::ExtraClickUp(DWORD xbutton)
 {
-    Event c_event{ xbutton, 0xFF, 0xFF };
+    Event c_event(xbutton, 0, 0);
 
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
@@ -70,18 +79,11 @@ bool InputUtilitiesCore::ExtraClickUp(DWORD xbutton)
     input.mi.time = 0;
     input.mi.dwExtraInfo = 0;
 
-    try {
-        bool success = SendInput(1, &input, sizeof(INPUT));
+    bool success = SendInput(1, &input, sizeof(INPUT));
+    if (success)
+        removeEvent(Event(xbutton, (char)0, (char)0));
 
-        if (success)
-            removeEvent({ xbutton, (char)0xFF, (char)0xFF });
-
-        return success;
-    }
-    catch (std::exception& e)
-    {
-        return false;
-    }
+    return success;
 }
 
 bool InputUtilitiesCore::MouseWheelRoll(int scrolls, int delta)
@@ -102,9 +104,9 @@ bool InputUtilitiesCore::vkKeyDown(char vkCode)
     bool success = true;
     bool upper = isUppercaseOn();
 
-    if (!upper && isupper(vkCode) || (upper && islower(vkCode)))
+    if ((!upper && isupper(vkCode)) || (upper && islower(vkCode)))
     {
-        Event c_event{ 0xFF, VK_SHIFT, (char)0xFF };
+        Event c_event(0, VK_SHIFT, (char)0);
 
         INPUT input = { 0 };
         input.type = INPUT_KEYBOARD;
@@ -117,7 +119,7 @@ bool InputUtilitiesCore::vkKeyDown(char vkCode)
     }
 
     char vk = static_cast<WORD>(toupper(vkCode));
-    Event c_event{ 0xFF, vk, (char)0xFF };
+    Event c_event(0, vk, (char)0);
 
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
@@ -142,7 +144,7 @@ bool InputUtilitiesCore::vkKeyUp(char vkCode)
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success)
-        removeEvent({ 0xFF, vk, (char)0xFF });
+        removeEvent(Event(0, vk, (char)0));
 
     bool upper = isUppercaseOn();
     if (isupper(vkCode))
@@ -154,7 +156,7 @@ bool InputUtilitiesCore::vkKeyUp(char vkCode)
         success &= SendInput(1, &input, sizeof(INPUT));
 
         if (success)
-            removeEvent({ 0xFF, VK_SHIFT, (char)0xFF });
+            removeEvent(Event(0, VK_SHIFT, (char)0));
     }
 
     return success;
@@ -165,9 +167,9 @@ bool InputUtilitiesCore::KeyDown(char key)
     bool success = true;
     bool upper = isUppercaseOn();
 
-    if (!upper && isupper(key) || (upper && islower(key)))
+    if ((!upper && isupper(key)) || (upper && islower(key)))
     {
-        Event c_event{ 0xFF, VK_SHIFT, 0xFF };
+        Event c_event(0, VK_SHIFT, 0);
 
         INPUT input = { 0 };
         input.type = INPUT_KEYBOARD;
@@ -180,7 +182,7 @@ bool InputUtilitiesCore::KeyDown(char key)
     }
 
     char k = tolower(key);
-    Event c_event{ 0xFF, 0xFF, k };
+    Event c_event(0, 0, k);
 
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
@@ -209,7 +211,7 @@ bool InputUtilitiesCore::KeyUp(char key)
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success)
-        removeEvent({ 0xFF, (char)0xFF, k });
+        removeEvent(Event(0, (char)0, k));
 
     bool upper = isUppercaseOn();
     if (isupper(key))
@@ -221,7 +223,7 @@ bool InputUtilitiesCore::KeyUp(char key)
         success &= SendInput(1, &input, sizeof(INPUT));
 
         if (success)
-            removeEvent({ 0xFF, VK_SHIFT, (char)0xFF });
+            removeEvent(Event(0, VK_SHIFT, (char)0));
     }
 
     return success;
@@ -234,7 +236,9 @@ bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<char>& vkCodes)
     for (const auto& vkCode : vkCodes) {
         success &= this->vkKeyDown(vkCode);
         if (success)
-            this->runningInputs.push_back({ 0xFF, vkCode, (char)0xFF });
+            this->runningInputs.push_back(Event(0, vkCode, (char)0));
+        else
+            break;
     }
 
     return success;
@@ -247,7 +251,7 @@ bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<char>& vkCodes)
     for (const auto& vkCode : vkCodes) {
         success &= this->vkKeyUp(vkCode);
         if (success)
-            removeEvent({ 0xFF, vkCode, (char)0xFF });
+            removeEvent(Event(0, vkCode, (char)0));
     }
 
     return success;
@@ -263,12 +267,17 @@ bool InputUtilitiesCore::isUppercaseOn()
 bool InputUtilitiesCore::isExtraMouseButton(DWORD m_event)
 {
     return (m_event != MOUSEEVENTF_LEFTDOWN &&
-        m_event != MOUSEEVENTF_LEFTUP &&
-        m_event != MOUSEEVENTF_RIGHTDOWN &&
-        m_event != MOUSEEVENTF_RIGHTUP &&
-        m_event != MOUSEEVENTF_MIDDLEDOWN &&
-        m_event != MOUSEEVENTF_MIDDLEUP)
-        ? true : false;
+            m_event != MOUSEEVENTF_LEFTUP &&
+            m_event != MOUSEEVENTF_RIGHTDOWN &&
+            m_event != MOUSEEVENTF_RIGHTUP &&
+            m_event != MOUSEEVENTF_MIDDLEDOWN &&
+            m_event != MOUSEEVENTF_MIDDLEUP)
+            ? true : false;
+}
+
+bool InputUtilitiesCore::isButtonUp(DWORD button)
+{
+    return (button == MOUSEEVENTF_LEFTUP || button == MOUSEEVENTF_RIGHTUP || button == MOUSEEVENTF_MIDDLEUP) ? true : false;
 }
 
 bool InputUtilitiesCore::removeEvent(const Event& e)
@@ -290,13 +299,14 @@ void InputUtilitiesCore::reset()
 {
     for (const auto& input : runningInputs)
     {
-        if (input.vk != 0xFF)
+        if (input.vk != 0)
             vkKeyUp(input.vk);
 
-        if (input.key != 0xFF)
+        if (input.key != 0)
             KeyUp(input.key);
 
-        if (input.mouse != 0xFF)
+        if (input.mouse != 0)
             MouseEvent(input.mouse << 1); //Bit shift left to obtain UP equivalence
     }
+    this->runningInputs.clear();
 }
