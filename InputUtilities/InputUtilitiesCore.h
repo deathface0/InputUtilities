@@ -46,12 +46,16 @@ public:
 	bool vkKeyUp(DWORD vkCode);
 	bool mappedKeyDown(char key);
 	bool mappedKeyUp(char key);
+	bool keyDown(DWORD vkCode);
+	bool keyUp(DWORD vkCode);
 	bool vkMultiKeyDown(const std::vector<DWORD>& vkCodes);
 	bool vkMultiKeyUp(const std::vector<DWORD>& vkCodes);
 	bool mappedMultiKeyDown(const std::vector<char>& keys);
 	bool mappedMultiKeyUp(const std::vector<char>& keys);
 	bool MultiKeyDown(const std::vector<DWORD>& keys);
 	bool MultiKeyUp(const std::vector<DWORD>& keys);
+
+	inline DWORD BuildVKey(char key) { return VkKeyScanA(key); };
 
 private:
 	bool isUppercaseOn();

@@ -1,81 +1,101 @@
 #include "InputUtilities.h"
 
-bool InputUtilities::extraClick(int button)
+bool InputUtilities::leftClick(time_t pressed_ms)
 {
-    INPUT input = { 0 };
-    input.type = INPUT_MOUSE;
-    input.mi.dx = 0;
-    input.mi.dy = 0;
-    input.mi.mouseData = XBUTTON1 + (button - 1); // Se calcula el número de botón extra en función del parámetro
-    input.mi.dwFlags = MOUSEEVENTF_XDOWN | MOUSEEVENTF_XUP;
-    input.mi.time = 0;
-    input.mi.dwExtraInfo = 0;
+    bool success = MouseEvent(MOUSEEVENTF_LEFTDOWN);
+    Sleep(pressed_ms);
+    success &= MouseEvent(MOUSEEVENTF_LEFTUP);
 
-    try {
-        return SendInput(1, &input, sizeof(INPUT));
-    }
-    catch (std::exception& e)
-    {
-        return false;
-    }
+    return success;
 }
 
-bool InputUtilities::vkKey(WORD vkCode)
+bool InputUtilities::rightClick(time_t pressed_ms)
 {
-    int flag = 0;
+    bool success = MouseEvent(MOUSEEVENTF_RIGHTDOWN);
+    Sleep(pressed_ms);
+    success &= MouseEvent(MOUSEEVENTF_RIGHTUP);
 
-    INPUT input = { 0 };
-    input.type = INPUT_KEYBOARD;
-    input.ki.wVk = vkCode;
-    input.ki.dwFlags = 0;
-    flag += SendInput(1, &input, sizeof(INPUT));
-    input.ki.dwFlags = KEYEVENTF_KEYUP;
-    flag += SendInput(1, &input, sizeof(INPUT));
-
-    return (flag == 2) ? true : false;
+    return success;
 }
 
-bool InputUtilities::directKey(char key)
+bool InputUtilities::middleClick(time_t pressed_ms)
 {
-    int flag = 0;
+    bool success = MouseEvent(MOUSEEVENTF_MIDDLEDOWN);
+    Sleep(pressed_ms);
+    success &= MouseEvent(MOUSEEVENTF_MIDDLEUP);
 
-    INPUT input = { 0 };
-    memset(&input, 0, sizeof(INPUT));
-    input.type = INPUT_KEYBOARD;
-    input.ki.dwExtraInfo = GetMessageExtraInfo();
-    input.ki.wScan =
-        static_cast<WORD>(MapVirtualKeyEx(VkKeyScanA(key), MAPVK_VK_TO_VSC, GetKeyboardLayout(0)));
-    input.ki.dwFlags = KEYEVENTF_SCANCODE;
-    flag += SendInput(1, &input, sizeof(INPUT));
-
-    input.ki.dwExtraInfo = GetMessageExtraInfo();
-    input.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
-    flag += SendInput(1, &input, sizeof(INPUT));
-
-    return (flag == 2) ? true : false;
+    return success;
 }
 
-bool InputUtilities::vkMultiKey(const std::vector<WORD>& vkCodes)
+bool InputUtilities::extraClick(UINT button, time_t pressed_ms)
 {
-    int flag = 0;
-    INPUT input = { 0 };
+    bool success = ExtraClickDown(button);
+    Sleep(pressed_ms);
+    success &= ExtraClickUp(button);
 
-    input.type = INPUT_KEYBOARD;
-    input.ki.wScan = 0;
-    input.ki.time = 0;
-    input.ki.dwExtraInfo = 0;
+    return success;
+}
 
-    for (const auto& vkCode : vkCodes) {
-        input.ki.wVk = vkCode;
-        input.ki.dwFlags = 0;
-        flag += SendInput(1, &input, sizeof(INPUT));
-    }
+bool InputUtilities::vkKey(DWORD vkCode, time_t pressed_ms)
+{
+    bool success = vkKeyDown(vkCode);
+    Sleep(pressed_ms);
+    success &= vkKeyUp(vkCode);
 
-    for (const auto& vkCode : vkCodes) {
-        input.ki.wVk = vkCode;
-        input.ki.dwFlags = KEYEVENTF_KEYUP;
-        flag += SendInput(1, &input, sizeof(INPUT));
-    }
+    return success;
+}
 
-    return (flag == vkCodes.size() * 2) ? true : false;
+bool InputUtilities::mappedKey(char key, time_t pressed_ms)
+{
+    bool success = mappedKeyDown(key);
+    Sleep(pressed_ms);
+    success &= mappedKeyUp(key);
+
+    return success;
+}
+
+bool InputUtilities::Key(DWORD vkCode, time_t pressed_ms)
+{
+    bool success = keyDown(vkCode);
+    Sleep(pressed_ms);
+    success &= keyUp(vkCode);
+
+    return success;
+}
+
+bool InputUtilities::vkMultiKey(const std::vector<DWORD>& vkCodes, time_t pressed_ms)
+{
+    bool success = vkMultiKeyDown(vkCodes);
+    Sleep(pressed_ms);
+    success &= vkMultiKeyUp(vkCodes);
+
+    return success;
+}
+
+bool InputUtilities::mappedMultiKey(const std::vector<char>& keys, time_t pressed_ms)
+{
+    bool success = mappedMultiKeyDown(keys);
+    Sleep(pressed_ms);
+    success &= mappedMultiKeyUp(keys);
+
+    return success;
+}
+
+bool InputUtilities::MultiKey(const std::vector<DWORD>& vkCodes, time_t pressed_ms)
+{
+    bool success = MultiKeyDown(vkCodes);
+    Sleep(pressed_ms);
+    success &= MultiKeyUp(vkCodes);
+
+    return success;
+}
+
+bool InputUtilities::typeStr(const std::string& str)
+{
+    bool success = true;
+
+    for (char ch : str)
+        success &= Key(static_cast<DWORD>(ch));
+
+    return success;
 }
