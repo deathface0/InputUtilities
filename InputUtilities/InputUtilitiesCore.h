@@ -3,15 +3,15 @@
 #include <Windows.h>
 #include <stdexcept>
 #include <vector>
-#include <iostream>
 #include <algorithm>
-#include <chrono>
 
 #define UP						1
 #define DOWN					-1
 
 #define XBUTTON1				0x0001 /* mouse extra button 1 */
 #define XBUTTON2				0x0002 /* mouse extra button 2 */
+#define XBUTTON3				0x0003 /* mouse extra button 3 */
+#define XBUTTON4				0x0004 /* mouse extra button 4 */
 
 #define MOUSEEVENTF_LEFTDOWN    0x0002 /* left button down */
 #define MOUSEEVENTF_LEFTUP      0x0004 /* left button up */
@@ -20,15 +20,17 @@
 #define MOUSEEVENTF_MIDDLEDOWN  0x0020 /* middle button down */
 #define MOUSEEVENTF_MIDDLEUP    0x0040 /* middle button up */
 
-struct Event
+enum IU_TYPE
 {
-	DWORD mouse;
-	DWORD vk;
-	char key;
+	IU_MOUSE = 0x01, IU_UC, IU_VK, IU_SCK
+};
 
-	Event(DWORD mouse, DWORD vk, char key) : mouse(mouse), vk(vk), key(key) {}
+struct Event {
+	IU_TYPE type;
+	WORD iu_event;
 
-	friend std::ostream& operator<<(std::ostream& os, const Event& e);
+	Event(IU_TYPE type, WORD iu_event)
+		:type(type), iu_event(iu_event) {}
 };
 
 class InputUtilitiesCore
@@ -37,31 +39,29 @@ public:
 	~InputUtilitiesCore();
 
 	bool SetCursorPos(int x, int y);
-	bool MouseEvent(DWORD m_event);
-	bool ExtraClickDown(DWORD xbutton);
-	bool ExtraClickUp(DWORD xbutton);
+	bool MouseEvent(WORD m_event);
+	bool ExtraClickDown(WORD xbutton);
+	bool ExtraClickUp(WORD xbutton);
 	bool MouseWheelRoll(int scrolls, int delta);
 
-	bool vkKeyDown(DWORD vkCode);
-	bool vkKeyUp(DWORD vkCode);
-	bool mappedKeyDown(char key);
-	bool mappedKeyUp(char key);
-	bool keyDown(DWORD vkCode);
-	bool keyUp(DWORD vkCode);
-	bool vkMultiKeyDown(const std::vector<DWORD>& vkCodes);
-	bool vkMultiKeyUp(const std::vector<DWORD>& vkCodes);
-	bool mappedMultiKeyDown(const std::vector<char>& keys);
-	bool mappedMultiKeyUp(const std::vector<char>& keys);
-	bool MultiKeyDown(const std::vector<DWORD>& keys);
-	bool MultiKeyUp(const std::vector<DWORD>& keys);
-
-	inline DWORD BuildVKey(char key) { return VkKeyScanA(key); };
+	bool vKeyDown(WORD vkCode);
+	bool vKeyUp(WORD vkCode);
+	bool unicodeKeyDown(wchar_t key);
+	bool unicodeKeyUp(wchar_t key);
+	bool scKeyDown(wchar_t key);
+	bool scKeyUp(wchar_t key);
+	bool keyDown(Event e);
+	bool keyUp(Event e);
+	bool vkMultiKeyDown(const std::vector<WORD>& vkCodes);
+	bool vkMultiKeyUp(const std::vector<WORD>& vkCodes);
+	bool unicodeMultiKeyDown(const std::vector<wchar_t>& keys);
+	bool unicodeMultiKeyUp(const std::vector<wchar_t>& keys);
+	bool scMultiKeyDown(const std::vector<wchar_t>& keys);
+	bool scMultiKeyUp(const std::vector<wchar_t>& keys);
 
 private:
-	bool isUppercaseOn();
 	bool isExtraMouseButton(DWORD m_event);
 	bool isButtonUp(DWORD button);
-	bool isVKey(DWORD key);
 
 	bool removeEvent(const Event& e);
 	void reset();

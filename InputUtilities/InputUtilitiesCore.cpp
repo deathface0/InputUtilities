@@ -1,9 +1,4 @@
-#include "InputUtilitiesCore.h"
-
-std::ostream& operator<<(std::ostream& os, const Event& e) {
-    os << "{m: " << e.mouse << ", vk: " << (DWORD)(char)e.vk << ", key: " << (DWORD)(char)e.key << "}" << std::endl;
-    return os;
-}
+﻿#include "InputUtilitiesCore.h"
 
 InputUtilitiesCore::~InputUtilitiesCore()
 {
@@ -21,32 +16,28 @@ bool InputUtilitiesCore::SetCursorPos(int x, int y)
     return SendInput(1, &input, sizeof(INPUT));
 }
 
-bool InputUtilitiesCore::MouseEvent(DWORD m_event)
+bool InputUtilitiesCore::MouseEvent(WORD m_event)
 {
     if (isExtraMouseButton(m_event))
         return false;
-
-
-    Event c_event(m_event, 0, 0);
 
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
     input.mi.dwFlags = m_event;
     bool success = SendInput(1, &input, sizeof(INPUT));
 
-
     if (!success) 
         return false;
 
     if (isButtonUp(m_event))
-        removeEvent(Event(c_event.mouse >> 1, 0, 0));
+        removeEvent({ IU_TYPE::IU_MOUSE, m_event });
     else
-        this->runningInputs.push_back(c_event);
+        this->runningInputs.push_back({ IU_TYPE::IU_MOUSE, m_event });
 
     return success;
 }
 
-bool InputUtilitiesCore::ExtraClickDown(DWORD xbutton)
+bool InputUtilitiesCore::ExtraClickDown(WORD xbutton)
 {
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
@@ -59,12 +50,12 @@ bool InputUtilitiesCore::ExtraClickDown(DWORD xbutton)
 
     bool success = SendInput(1, &input, sizeof(INPUT));
     if (success)
-        this->runningInputs.push_back(Event(xbutton, 0, 0));
+        this->runningInputs.push_back({ IU_TYPE::IU_MOUSE, xbutton });
 
     return success;
 }
 
-bool InputUtilitiesCore::ExtraClickUp(DWORD xbutton)
+bool InputUtilitiesCore::ExtraClickUp(WORD xbutton)
 {
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
@@ -77,7 +68,7 @@ bool InputUtilitiesCore::ExtraClickUp(DWORD xbutton)
 
     bool success = SendInput(1, &input, sizeof(INPUT));
     if (success)
-        removeEvent(Event(xbutton, 0, 0));
+        removeEvent({ IU_TYPE::IU_MOUSE, xbutton });
 
     return success;
 }
@@ -95,180 +86,158 @@ bool InputUtilitiesCore::MouseWheelRoll(int scrolls, int delta)
     return SendInput(1, &input, sizeof(INPUT));
 }
 
-bool InputUtilitiesCore::vkKeyDown(DWORD vkCode)
+bool InputUtilitiesCore::vKeyDown(WORD vkCode)
 {
-    bool success = true;
-
-    BYTE modifiers = HIBYTE(vkCode);
-
-    bool upper = isUppercaseOn();
-    bool isVkeyCode = isVKey(vkCode);
-    char c_vkey = isVkeyCode ? 0 : static_cast<char>(vkCode);
-    bool isKeyUpper = c_vkey != 0 && ((!upper && isupper(c_vkey)) || (upper && islower(c_vkey)));
-
-    if (isKeyUpper || modifiers & 1)
-    {
-        INPUT input = { 0 };
-        input.type = INPUT_KEYBOARD;
-        input.ki.wVk = VK_SHIFT;
-        input.ki.dwFlags = 0;
-        success &= SendInput(1, &input, sizeof(INPUT));
-
-        if (success)
-            this->runningInputs.push_back(Event(0, VK_SHIFT, 0));
-    }
-
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
-    input.ki.wVk = isVkeyCode ? vkCode : toupper(c_vkey);
+    input.ki.wVk = vkCode;
     input.ki.dwFlags = 0;
-    success &= SendInput(1, &input, sizeof(INPUT));
+    bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success)
-        this->runningInputs.push_back(Event(0, vkCode, 0));
+        this->runningInputs.push_back({ IU_TYPE::IU_VK, vkCode });
 
     return success;
 }
 
-bool InputUtilitiesCore::vkKeyUp(DWORD vkCode)
+bool InputUtilitiesCore::vKeyUp(WORD vkCode)
 {
-    bool isVkeyCode = isVKey(vkCode);
-    char c_vkey = isVkeyCode ? 0 : static_cast<char>(vkCode);
-    BYTE modifiers = HIBYTE(vkCode);
-
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
-    input.ki.wVk = isVkeyCode ? vkCode : toupper(c_vkey);
+    input.ki.wVk = vkCode;
     input.ki.dwFlags = KEYEVENTF_KEYUP;
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success)
-        removeEvent(Event(0, vkCode, 0));
-
-    if (isupper(c_vkey) || modifiers & 1)
-    {
-        INPUT input = { 0 };
-        input.type = INPUT_KEYBOARD;
-        input.ki.wVk = VK_SHIFT;
-        input.ki.dwFlags = KEYEVENTF_KEYUP;
-        success &= SendInput(1, &input, sizeof(INPUT));
-
-        if (success)
-            removeEvent(Event(0, VK_SHIFT, 0));
-    }
+        removeEvent(Event(IU_TYPE::IU_VK, vkCode));
 
     return success;
 }
 
-bool InputUtilitiesCore::mappedKeyDown(char key)
+bool InputUtilitiesCore::unicodeKeyDown(wchar_t key)
 {
-    if (isVKey(key))
-        return false;
-
-    bool success = true;
-    bool upper = isUppercaseOn();
-
-    if ((!upper && isupper(key)) || (upper && islower(key)))
-    {
-        INPUT input = { 0 };
-        input.type = INPUT_KEYBOARD;
-        input.ki.wVk = VK_SHIFT;
-        input.ki.dwFlags = 0;
-        success &= SendInput(1, &input, sizeof(INPUT));
-
-        if (success)
-            this->runningInputs.push_back(Event(0, VK_SHIFT, 0));
-    }
-
-    char k = tolower(key);
-
+    WORD wk = static_cast<WORD>(key);
+     
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
     input.ki.dwExtraInfo = GetMessageExtraInfo();
-    input.ki.wScan =
-        static_cast<WORD>(MapVirtualKeyEx(VkKeyScanA(k), MAPVK_VK_TO_VSC, GetKeyboardLayout(0)));
-    input.ki.dwFlags = KEYEVENTF_SCANCODE;
-    success &= SendInput(1, &input, sizeof(INPUT));
-
-    if (success)
-        this->runningInputs.push_back(Event(0, 0, k));
-
-    return success;
-}
-
-bool InputUtilitiesCore::mappedKeyUp(char key)
-{
-    if (isVKey(key))
-        return false;
-
-    char k = tolower(key);
-
-    INPUT input = { 0 };
-    input.type = INPUT_KEYBOARD;
-    input.ki.dwExtraInfo = GetMessageExtraInfo();
-    input.ki.wScan =
-        static_cast<WORD>(MapVirtualKeyEx(VkKeyScanA(k), MAPVK_VK_TO_VSC, GetKeyboardLayout(0)));
-    input.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+    input.ki.wScan = wk;
+    input.ki.dwFlags = KEYEVENTF_UNICODE;
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success)
-        removeEvent(Event(0, 0, k));
+        this->runningInputs.push_back({ IU_TYPE::IU_UC, wk });
 
-    if (isupper(key))
-    {
-        INPUT input = { 0 };
-        input.type = INPUT_KEYBOARD;
-        input.ki.wVk = VK_SHIFT;
-        input.ki.dwFlags = KEYEVENTF_KEYUP;
-        success &= SendInput(1, &input, sizeof(INPUT));
+    return success;
+}
 
+bool InputUtilitiesCore::unicodeKeyUp(wchar_t key)
+{
+    WORD wk = static_cast<WORD>(key);
+
+    INPUT input = { 0 };
+    input.type = INPUT_KEYBOARD;
+    input.ki.dwExtraInfo = GetMessageExtraInfo();
+    input.ki.wScan = wk;
+    input.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+    bool success = SendInput(1, &input, sizeof(INPUT));
+
+    if (success)
+        removeEvent(Event(IU_TYPE::IU_UC, wk));
+
+    return success;
+}
+
+bool InputUtilitiesCore::scKeyDown(wchar_t key)
+{
+    BYTE vk = VkKeyScanW(key);
+    if (vk == 0xFF)
+        return false;
+
+    WORD scancode = MapVirtualKeyEx(vk & 0xFF, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
+
+    INPUT input = { 0 };
+    input.type = INPUT_KEYBOARD;
+    input.ki.wScan = scancode;               
+    input.ki.dwFlags = KEYEVENTF_SCANCODE;   
+    input.ki.dwExtraInfo = GetMessageExtraInfo();
+    bool success = SendInput(1, &input, sizeof(INPUT));
+
+    if (success)
+        this->runningInputs.push_back({ IU_TYPE::IU_SCK, scancode });
+
+    return success;
+}
+
+bool InputUtilitiesCore::scKeyUp(wchar_t key)
+{
+    BYTE vk = VkKeyScanW(key);
+    if (vk == 0xFF)
+        return false;
+
+    WORD scancode = MapVirtualKeyEx(vk & 0xFF, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
+
+    INPUT input = { 0 };
+    input.type = INPUT_KEYBOARD;
+    input.ki.wScan = scancode;
+    input.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+    input.ki.dwExtraInfo = GetMessageExtraInfo();
+    bool success = SendInput(1, &input, sizeof(INPUT));
+
+    if (success)
+        removeEvent(Event(IU_TYPE::IU_SCK, scancode));
+
+    return success;
+}
+
+bool InputUtilitiesCore::keyDown(Event e)
+{
+    bool success = true;
+
+    switch (e.type) {
+    case IU_TYPE::IU_VK:
+        success &= this->vKeyDown(e.iu_event);
+        break;
+    case IU_TYPE::IU_UC:
+        success &= this->unicodeKeyDown(e.iu_event);
+        break;
+    case IU_TYPE::IU_SCK:
+        success &= this->scKeyDown(e.iu_event);
+        break;
+    default:
+        success = false;
+    }
+
+    return success;
+}
+
+bool InputUtilitiesCore::keyUp(Event e)
+{
+    bool success = true;
+
+    switch (e.type) {
+    case IU_TYPE::IU_VK:
+        success &= this->vKeyUp(e.iu_event);
+    case IU_TYPE::IU_UC:
+        success &= this->unicodeKeyUp(e.iu_event);
+    case IU_TYPE::IU_SCK:
+        success &= this->scKeyUp(e.iu_event);
+        break;
+    default:
+        success = false;
+    }
+
+    return success;
+}
+
+bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<WORD>& vkCodes)
+{
+    bool success = true;
+
+    for (const auto& vk : vkCodes) {
+        success &= this->vKeyDown(vk);
         if (success)
-            removeEvent(Event(0, VK_SHIFT, 0));
-    }
-
-    return success;
-}
-
-bool InputUtilitiesCore::keyDown(DWORD vkCode)
-{
-    bool success = true;
-
-    if (isVKey(vkCode))
-    {
-        success &= this->vkKeyDown(vkCode);
-    }
-    else {
-        char c_key = static_cast<char>(vkCode);
-        success &= this->mappedKeyDown(c_key);
-    }
-
-    return success;
-}
-
-bool InputUtilitiesCore::keyUp(DWORD vkCode)
-{
-    bool success = true;
-
-    if (isVKey(vkCode))
-    {
-        success &= this->vkKeyUp(vkCode);
-    }
-    else {
-        char c_key = static_cast<char>(vkCode);
-        success &= this->mappedKeyUp(c_key);
-    }
-
-    return success;
-}
-
-bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<DWORD>& vkCodes)
-{
-    bool success = true;
-
-    for (const auto& vkCode : vkCodes) {
-        success &= this->vkKeyDown(vkCode);
-        if (success)
-            this->runningInputs.push_back(Event(0, vkCode, 0));
+            this->runningInputs.push_back({ IU_TYPE::IU_VK, vk });
         else
             break;
     }
@@ -276,27 +245,27 @@ bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<DWORD>& vkCodes)
     return success;
 }
 
-bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<DWORD>& vkCodes)
+bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<WORD>& vkCodes)
 {
     bool success = true;
 
-    for (const auto& vkCode : vkCodes) {
-        success &= this->vkKeyUp(vkCode);
+    for (const auto& vk : vkCodes) {
+        success &= this->vKeyUp(vk);
         if (success)
-            removeEvent(Event(0, vkCode, 0));
+            removeEvent(Event(IU_TYPE::IU_VK, vk));
     }
 
     return success;
 }
 
-bool InputUtilitiesCore::mappedMultiKeyDown(const std::vector<char>& keys)
+bool InputUtilitiesCore::unicodeMultiKeyDown(const std::vector<wchar_t>& keys)
 {
     bool success = true;
 
     for (const auto& key : keys) {
-        success &= this->mappedKeyDown(key);
+        success &= this->unicodeKeyDown(key);
         if (success)
-            this->runningInputs.push_back(Event(0, 0, key));
+            this->runningInputs.push_back({ IU_TYPE::IU_UC, static_cast<WORD>(key) });
         else
             break;
     }
@@ -304,61 +273,47 @@ bool InputUtilitiesCore::mappedMultiKeyDown(const std::vector<char>& keys)
     return success;
 }
 
-bool InputUtilitiesCore::mappedMultiKeyUp(const std::vector<char>& keys)
+bool InputUtilitiesCore::unicodeMultiKeyUp(const std::vector<wchar_t>& keys)
 {
     bool success = true;
 
     for (const auto& key : keys) {
-        success &= this->mappedKeyUp(key);
+        success &= this->unicodeKeyUp(key);
         if (success)
-            removeEvent(Event(0, 0, key));
+            removeEvent(Event(IU_TYPE::IU_UC, static_cast<WORD>(key)));
     }
 
     return success;
 }
 
-bool InputUtilitiesCore::MultiKeyDown(const std::vector<DWORD>& keys)
+bool InputUtilitiesCore::scMultiKeyDown(const std::vector<wchar_t>& keys)
 {
     bool success = true;
 
     for (const auto& key : keys) {
-        if (isVKey(key))
-        {
-            success &= this->vkKeyDown(key);
-            if (success)
-                this->runningInputs.push_back(Event(0, key, 0));
-        }
-        else {
-            char c_key = static_cast<char>(key);
-            success &= this->mappedKeyDown(c_key);
-            if (success)
-                this->runningInputs.push_back(Event(0, 0, c_key));
-        }
+        success &= this->scKeyDown(key);
+        if (success)
+            this->runningInputs.push_back({ IU_TYPE::IU_SCK, static_cast<WORD>(key) });
+        else
+            break;
     }
 
     return success;
 }
 
-bool InputUtilitiesCore::MultiKeyUp(const std::vector<DWORD>& keys)
+bool InputUtilitiesCore::scMultiKeyUp(const std::vector<wchar_t>& keys)
 {
     bool success = true;
 
     for (const auto& key : keys) {
-        char c_key = static_cast<char>(key);
-
-        success &= isVKey(key)
-            ? (this->vkKeyUp(c_key) ? removeEvent(Event(0, c_key, 0)) : false)
-            : (this->mappedKeyUp(c_key) ? removeEvent(Event(0, 0, c_key)) : false);
+        success &= this->scKeyUp(key);
+        if (success)
+            removeEvent({ IU_TYPE::IU_SCK, static_cast<WORD>(key) });
+        else
+            break;
     }
 
     return success;
-}
-
-bool InputUtilitiesCore::isUppercaseOn()
-{
-    bool isShiftPressed = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
-    bool isCapsLockOn = (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
-    return isShiftPressed ^ isCapsLockOn;
 }
 
 bool InputUtilitiesCore::isExtraMouseButton(DWORD m_event)
@@ -377,17 +332,6 @@ bool InputUtilitiesCore::isButtonUp(DWORD button)
     return (button == MOUSEEVENTF_LEFTUP || button == MOUSEEVENTF_RIGHTUP || button == MOUSEEVENTF_MIDDLEUP) ? true : false;
 }
 
-bool InputUtilitiesCore::isVKey(DWORD key)
-{
-    char c_key = static_cast<char>(key);
-
-    return (c_key >= 65 && c_key <= 93  ||
-            c_key >= 96 && c_key <= 122 || 
-            c_key >= 43 && c_key <= 57  || 
-            c_key == 39 || c_key == 59  || c_key == 61)
-            ? false : true;
-}
-
 bool InputUtilitiesCore::removeEvent(const Event& e)
 {
     auto originalSize = runningInputs.size();
@@ -395,7 +339,7 @@ bool InputUtilitiesCore::removeEvent(const Event& e)
     this->runningInputs.erase(
         std::remove_if(runningInputs.begin(), runningInputs.end(),
             [&e](const Event& ev) {
-                return ev.mouse == e.mouse && ev.vk == e.vk && ev.key == e.key;
+                return ev.type == e.type && ev.iu_event == e.iu_event;
             }),
         runningInputs.end()
     );
@@ -407,14 +351,20 @@ void InputUtilitiesCore::reset()
 {
     for (const auto& input : runningInputs)
     {
-        if (input.vk != 0)
-            vkKeyUp(input.vk);
-
-        if (input.key != 0)
-            mappedKeyUp(input.key);
-
-        if (input.mouse != 0)
-            MouseEvent(input.mouse << 1); //Bit shift left to obtain UP equivalence
+        switch (input.type)
+        {
+        case IU_TYPE::IU_VK:
+            vKeyUp(input.iu_event);
+            break;
+        case IU_TYPE::IU_UC:
+            unicodeKeyUp(input.iu_event);
+            break;
+        case IU_TYPE::IU_SCK:
+            scKeyUp(input.iu_event);
+            break;
+        case IU_TYPE::IU_MOUSE:
+            MouseEvent(input.iu_event << 1); //Bit shift left to obtain UP equivalence
+            break;
+        }
     }
-    this->runningInputs.clear();
 }

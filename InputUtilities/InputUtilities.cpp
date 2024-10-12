@@ -36,34 +36,43 @@ bool InputUtilities::extraClick(UINT button, time_t pressed_ms)
     return success;
 }
 
-bool InputUtilities::vkKey(DWORD vkCode, time_t pressed_ms)
+bool InputUtilities::vKey(WORD vkCode, time_t pressed_ms)
 {
-    bool success = vkKeyDown(vkCode);
+    bool success = vKeyDown(vkCode);
     Sleep(pressed_ms);
-    success &= vkKeyUp(vkCode);
+    success &= vKeyUp(vkCode);
 
     return success;
 }
 
-bool InputUtilities::mappedKey(char key, time_t pressed_ms)
+bool InputUtilities::unicodeKey(wchar_t key, time_t pressed_ms)
 {
-    bool success = mappedKeyDown(key);
+    bool success = unicodeKeyDown(key);
     Sleep(pressed_ms);
-    success &= mappedKeyUp(key);
+    success &= unicodeKeyUp(key);
 
     return success;
 }
 
-bool InputUtilities::Key(DWORD vkCode, time_t pressed_ms)
+bool InputUtilities::scKey(wchar_t key, time_t pressed_ms)
 {
-    bool success = keyDown(vkCode);
+    bool success = scKeyDown(key);
     Sleep(pressed_ms);
-    success &= keyUp(vkCode);
+    success &= scKeyUp(key);
 
     return success;
 }
 
-bool InputUtilities::vkMultiKey(const std::vector<DWORD>& vkCodes, time_t pressed_ms)
+bool InputUtilities::Key(Event e, time_t pressed_ms)
+{
+    bool success = keyDown(e);
+    Sleep(pressed_ms);
+    success &= keyUp(e);
+
+    return success;
+}
+
+bool InputUtilities::vkMultiKey(const std::vector<WORD>& vkCodes, time_t pressed_ms)
 {
     bool success = vkMultiKeyDown(vkCodes);
     Sleep(pressed_ms);
@@ -72,30 +81,30 @@ bool InputUtilities::vkMultiKey(const std::vector<DWORD>& vkCodes, time_t presse
     return success;
 }
 
-bool InputUtilities::mappedMultiKey(const std::vector<char>& keys, time_t pressed_ms)
+bool InputUtilities::unicodeMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms)
 {
-    bool success = mappedMultiKeyDown(keys);
+    bool success = unicodeMultiKeyDown(keys);
     Sleep(pressed_ms);
-    success &= mappedMultiKeyUp(keys);
+    success &= unicodeMultiKeyUp(keys);
 
     return success;
 }
 
-bool InputUtilities::MultiKey(const std::vector<DWORD>& vkCodes, time_t pressed_ms)
+bool InputUtilities::scMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms)
 {
-    bool success = MultiKeyDown(vkCodes);
+    bool success = scMultiKeyDown(keys);
     Sleep(pressed_ms);
-    success &= MultiKeyUp(vkCodes);
+    success &= scMultiKeyUp(keys);
 
     return success;
 }
 
-bool InputUtilities::typeStr(const std::string& str)
+bool InputUtilities::typeStr(const std::wstring& str)
 {
     bool success = true;
 
-    for (char ch : str)
-        success &= Key(static_cast<DWORD>(ch));
+    for (wchar_t ch : str)
+        success &= unicodeKey(ch);
 
     return success;
 }
