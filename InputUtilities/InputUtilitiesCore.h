@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #define UP						1
 #define DOWN					-1
@@ -36,6 +37,7 @@ struct Event {
 class InputUtilitiesCore
 {
 public:
+	InputUtilitiesCore(bool safemode = true);
 	~InputUtilitiesCore();
 
 	bool SetCursorPos(int x, int y);
@@ -68,4 +70,7 @@ private:
 
 private:
 	std::vector<Event> runningInputs;
+	
+protected:
+	bool safemode;
 };

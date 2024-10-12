@@ -5,6 +5,9 @@
 class InputUtilities : public InputUtilitiesCore
 {
 public:
+	InputUtilities(bool safemode = true) 
+		: InputUtilitiesCore(safemode) {};
+
 	bool leftClick(time_t pressed_ms = 0);
 	bool rightClick(time_t pressed_ms = 0);
 	bool middleClick(time_t pressed_ms = 0);
