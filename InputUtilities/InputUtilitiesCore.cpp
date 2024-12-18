@@ -78,7 +78,10 @@ bool InputUtilitiesCore::ExtraClickUp(WORD xbutton)
     input.mi.dwFlags = MOUSEEVENTF_XUP;
 
     bool success = SendInput(1, &input, sizeof(INPUT));
-    if (success && safemode)
+    if (!success)
+        return -1;
+
+    if (safemode)
         removeEvent({ IU_TYPE::IU_MOUSE, xbutton });
 
     return success;
@@ -100,8 +103,10 @@ bool InputUtilitiesCore::vKeyDown(WORD vkCode)
     input.ki.wVk = vkCode;
     input.ki.dwFlags = 0;
     bool success = SendInput(1, &input, sizeof(INPUT));
+    if (!success)
+        return -1;
 
-    if (success && safemode)
+    if (safemode)
         this->runningInputs.push_back({ IU_TYPE::IU_VK, vkCode });
 
     return success;
@@ -114,8 +119,10 @@ bool InputUtilitiesCore::vKeyUp(WORD vkCode)
     input.ki.wVk = vkCode;
     input.ki.dwFlags = KEYEVENTF_KEYUP;
     bool success = SendInput(1, &input, sizeof(INPUT));
+    if (!success)
+        return -1;
 
-    if (success && safemode)
+    if (safemode)
         removeEvent(Event(IU_TYPE::IU_VK, vkCode));
 
     return success;
@@ -128,11 +135,13 @@ bool InputUtilitiesCore::unicodeKeyDown(wchar_t key)
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
     input.ki.dwExtraInfo = GetMessageExtraInfo();
-    input.ki.wScan = wk;
+    input.ki.wScan = static_cast<WORD>(key);
     input.ki.dwFlags = KEYEVENTF_UNICODE;
     bool success = SendInput(1, &input, sizeof(INPUT));
+    if (!success)
+        return -1;
 
-    if (success && safemode)
+    if (safemode)
         this->runningInputs.push_back({ IU_TYPE::IU_UC, wk });
 
     return success;
@@ -148,8 +157,10 @@ bool InputUtilitiesCore::unicodeKeyUp(wchar_t key)
     input.ki.wScan = wk;
     input.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
     bool success = SendInput(1, &input, sizeof(INPUT));
+    if (!success)
+        return -1;
 
-    if (success && safemode)
+    if (safemode)
         removeEvent(Event(IU_TYPE::IU_UC, wk));
 
     return success;
@@ -169,8 +180,10 @@ bool InputUtilitiesCore::scKeyDown(wchar_t key)
     input.ki.dwFlags = KEYEVENTF_SCANCODE;   
     input.ki.dwExtraInfo = GetMessageExtraInfo();
     bool success = SendInput(1, &input, sizeof(INPUT));
+    if (!success)
+        return -1;
 
-    if (success && safemode)
+    if (safemode)
         this->runningInputs.push_back({ IU_TYPE::IU_SCK, scancode });
 
     return success;
@@ -190,8 +203,10 @@ bool InputUtilitiesCore::scKeyUp(wchar_t key)
     input.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
     input.ki.dwExtraInfo = GetMessageExtraInfo();
     bool success = SendInput(1, &input, sizeof(INPUT));
+    if (!success)
+        return -1;
 
-    if (success && safemode)
+    if (safemode)
         removeEvent(Event(IU_TYPE::IU_SCK, scancode));
 
     return success;
@@ -243,10 +258,11 @@ bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<WORD>& vkCodes)
 
     for (const auto& vk : vkCodes) {
         success &= this->vKeyDown(vk);
-        if (success && safemode)
-            this->runningInputs.push_back({ IU_TYPE::IU_VK, vk });
-        else
+        if (!success)
             break;
+
+        if (safemode)
+            this->runningInputs.push_back({ IU_TYPE::IU_VK, vk });
     }
 
     return success;
@@ -258,7 +274,10 @@ bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<WORD>& vkCodes)
 
     for (const auto& vk : vkCodes) {
         success &= this->vKeyUp(vk);
-        if (success && safemode)
+        if (!success)
+            break;
+
+        if (safemode)
             removeEvent(Event(IU_TYPE::IU_VK, vk));
     }
 
@@ -271,10 +290,11 @@ bool InputUtilitiesCore::unicodeMultiKeyDown(const std::vector<wchar_t>& keys)
 
     for (const auto& key : keys) {
         success &= this->unicodeKeyDown(key);
-        if (success && safemode)
-            this->runningInputs.push_back({ IU_TYPE::IU_UC, static_cast<WORD>(key) });
-        else
+        if (!success)
             break;
+
+        if (safemode)
+            this->runningInputs.push_back({ IU_TYPE::IU_UC, static_cast<WORD>(key) });
     }
 
     return success;
@@ -286,7 +306,10 @@ bool InputUtilitiesCore::unicodeMultiKeyUp(const std::vector<wchar_t>& keys)
 
     for (const auto& key : keys) {
         success &= this->unicodeKeyUp(key);
-        if (success && safemode)
+        if (!success)
+            break;
+
+        if (safemode)
             removeEvent(Event(IU_TYPE::IU_UC, static_cast<WORD>(key)));
     }
 
@@ -299,10 +322,11 @@ bool InputUtilitiesCore::scMultiKeyDown(const std::vector<wchar_t>& keys)
 
     for (const auto& key : keys) {
         success &= this->scKeyDown(key);
-        if (success && safemode)
-            this->runningInputs.push_back({ IU_TYPE::IU_SCK, static_cast<WORD>(key) });
-        else
+        if (!success)
             break;
+
+        if (safemode)
+            this->runningInputs.push_back({ IU_TYPE::IU_SCK, static_cast<WORD>(key) });
     }
 
     return success;
@@ -314,10 +338,11 @@ bool InputUtilitiesCore::scMultiKeyUp(const std::vector<wchar_t>& keys)
 
     for (const auto& key : keys) {
         success &= this->scKeyUp(key);
-        if (success && safemode)
-            removeEvent({ IU_TYPE::IU_SCK, static_cast<WORD>(key) });
-        else
+        if (!success)
             break;
+
+        if (safemode)
+            removeEvent({ IU_TYPE::IU_SCK, static_cast<WORD>(key) });
     }
 
     return success;

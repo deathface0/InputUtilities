@@ -37,7 +37,7 @@ struct Event {
 class InputUtilitiesCore
 {
 public:
-	InputUtilitiesCore(bool safemode = true);
+	InputUtilitiesCore(bool safemode);
 	~InputUtilitiesCore();
 
 	bool SetCursorPos(int x, int y);
@@ -70,7 +70,5 @@ private:
 
 private:
 	std::vector<Event> runningInputs;
-	
-protected:
 	bool safemode;
 };
