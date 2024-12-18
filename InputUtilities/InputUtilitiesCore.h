@@ -61,6 +61,9 @@ public:
 	bool scMultiKeyDown(const std::vector<wchar_t>& keys);
 	bool scMultiKeyUp(const std::vector<wchar_t>& keys);
 
+	std::string get_utf8(const std::wstring& wstr);
+	std::wstring get_utf16(const std::string& str);
+
 private:
 	bool isExtraMouseButton(DWORD m_event);
 	bool isButtonUp(DWORD button);

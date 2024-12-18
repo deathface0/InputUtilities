@@ -108,3 +108,13 @@ bool InputUtilities::typeStr(const std::wstring& str)
 
     return success;
 }
+
+bool InputUtilities::scTypeStr(const std::wstring& str)
+{
+    bool success = true;
+
+    for (wchar_t ch : str)
+        success &= scKey(ch);
+
+    return success;
+}
