@@ -7,7 +7,8 @@ InputUtilitiesCore::InputUtilitiesCore(bool safemode)
 
 InputUtilitiesCore::~InputUtilitiesCore()
 {
-    reset();
+    if (safemode)
+        reset();
 }
 
 bool InputUtilitiesCore::SetCursorPos(int x, int y, bool abs)
@@ -87,12 +88,12 @@ bool InputUtilitiesCore::ExtraClickUp(WORD xbutton)
     return success;
 }
 
-bool InputUtilitiesCore::MouseWheelRoll(int scrolls, int delta)
+bool InputUtilitiesCore::MouseWheelRoll(int scrolls, MWheelDir delta, MWheelAxis dir)
 {
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
     input.mi.mouseData = scrolls * delta * WHEEL_DELTA;
-    input.mi.dwFlags = MOUSEEVENTF_WHEEL;
+    input.mi.dwFlags = dir;
     return SendInput(1, &input, sizeof(INPUT));
 }
 
@@ -184,7 +185,7 @@ bool InputUtilitiesCore::scKeyDown(wchar_t key)
         return false;
 
     if (safemode)
-        this->runningInputs.insert({ IU_TYPE::IU_SCK, scancode });
+        this->runningInputs.insert({ IU_TYPE::IU_SC, scancode });
 
     return success;
 }
@@ -208,7 +209,7 @@ bool InputUtilitiesCore::scKeyUp(wchar_t key)
         return -1;
 
     if (safemode)
-        this->runningInputs.erase({ IU_TYPE::IU_SCK, scancode });
+        this->runningInputs.erase({ IU_TYPE::IU_SC, scancode });
 
     return success;
 }
@@ -224,7 +225,7 @@ bool InputUtilitiesCore::keyDown(Event e)
     case IU_TYPE::IU_UC:
         success &= this->unicodeKeyDown(e.iu_event);
         break;
-    case IU_TYPE::IU_SCK:
+    case IU_TYPE::IU_SC:
         success &= this->scKeyDown(e.iu_event);
         break;
     default:
@@ -245,7 +246,7 @@ bool InputUtilitiesCore::keyUp(Event e)
     case IU_TYPE::IU_UC:
         success &= this->unicodeKeyUp(e.iu_event);
         break;
-    case IU_TYPE::IU_SCK:
+    case IU_TYPE::IU_SC:
         success &= this->scKeyUp(e.iu_event);
         break;
     default:
@@ -379,7 +380,7 @@ void InputUtilitiesCore::reset()
         case IU_TYPE::IU_UC:
             unicodeKeyUp(input.iu_event);
             break;
-        case IU_TYPE::IU_SCK:
+        case IU_TYPE::IU_SC:
             scKeyUp(input.iu_event);
             break;
         case IU_TYPE::IU_MOUSE:

@@ -7,23 +7,34 @@
 #include <algorithm>
 #include <iostream>
 
-#define UP				  1
-#define DOWN			  -1
+#define EXBUTTON(n) EXBUTTON##n = n /* mouse extra button n */
 
-#define XBUTTON1		  0x0001 /* mouse extra button 1 */
-#define XBUTTON2		  0x0002 /* mouse extra button 2 */
-#define XBUTTON3		  0x0003 /* mouse extra button 3 */
-#define XBUTTON4		  0x0004 /* mouse extra button 4 */
+enum MouseAction {
+	LEFTDOWN = 0x0002,
+	LEFTUP = 0x0004,
+	RIGHTDOWN = 0x0008,
+	RIGHTUP = 0x0010,
+	MIDDLEDOWN = 0x0020,
+	MIDDLEUP = 0x0040
+};
 
-#define MOUSE_LEFTDOWN    0x0002 /* left button down */
-#define MOUSE_LEFTUP      0x0004 /* left button up */
-#define MOUSE_RIGHTDOWN   0x0008 /* right button down */
-#define MOUSE_RIGHTUP     0x0010 /* right button up */
-#define MOUSE_MIDDLEDOWN  0x0020 /* middle button down */
-#define MOUSE_MIDDLEUP    0x0040 /* middle button up */
+enum MWheelAxis {
+	VERTICAL = 0x0800,
+	HORIZONTAL = 0x01000
+};
+
+enum MWheelDir {
+	UP = 1,
+	DOWN = -1,
+	RIGHT = 1,
+	LEFT = -1
+};
 
 enum IU_TYPE {
-	IU_MOUSE = 0x01, IU_UC, IU_VK, IU_SCK
+	IU_MOUSE = 0x01, 
+	IU_UC, 
+	IU_VK, 
+	IU_SC
 };
 
 struct Key {
@@ -69,8 +80,8 @@ public:
 	bool MouseEvent(WORD m_event);
 	bool ExtraClickDown(WORD xbutton);
 	bool ExtraClickUp(WORD xbutton);
-	bool MouseWheelRoll(int scrolls, int delta);
-
+	bool MouseWheelRoll(int scrolls, MWheelDir delta, MWheelAxis dir = VERTICAL);
+	
 	bool vKeyDown(WORD vkCode);
 	bool vKeyUp(WORD vkCode);
 	bool unicodeKeyDown(wchar_t key);
