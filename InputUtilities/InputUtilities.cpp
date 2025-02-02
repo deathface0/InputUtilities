@@ -1,120 +1,120 @@
 #include "InputUtilities.h"
 
-bool InputUtilities::leftClick(time_t pressed_ms)
+Result InputUtilities::leftClick(time_t pressed_ms)
 {
-    bool success = MouseEvent(MOUSEEVENTF_LEFTDOWN);
+    Result result = MouseEvent(LEFTDOWN);
     Sleep(pressed_ms);
-    success &= MouseEvent(MOUSEEVENTF_LEFTUP);
+    MouseEvent(MOUSEEVENTF_LEFTUP);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::rightClick(time_t pressed_ms)
+Result InputUtilities::rightClick(time_t pressed_ms)
 {
-    bool success = MouseEvent(MOUSEEVENTF_RIGHTDOWN);
+    Result result = MouseEvent(RIGHTDOWN);
     Sleep(pressed_ms);
-    success &= MouseEvent(MOUSEEVENTF_RIGHTUP);
+    MouseEvent(MOUSEEVENTF_RIGHTUP);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::middleClick(time_t pressed_ms)
+Result InputUtilities::middleClick(time_t pressed_ms)
 {
-    bool success = MouseEvent(MOUSEEVENTF_MIDDLEDOWN);
+    Result result = MouseEvent(MIDDLEDOWN);
     Sleep(pressed_ms);
-    success &= MouseEvent(MOUSEEVENTF_MIDDLEUP);
+    MouseEvent(MOUSEEVENTF_MIDDLEUP);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::extraClick(UINT button, time_t pressed_ms)
+Result InputUtilities::extraClick(UINT button, time_t pressed_ms)
 {
-    bool success = ExtraClickDown(button);
+    Result result = ExtraClickDown(button);
     Sleep(pressed_ms);
-    success &= ExtraClickUp(button);
+    ExtraClickUp(button);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::vKey(WORD vkCode, time_t pressed_ms)
+Result InputUtilities::vKey(WORD vkCode, time_t pressed_ms)
 {
-    bool success = vKeyDown(vkCode);
+    Result result = vKeyDown(vkCode);
     Sleep(pressed_ms);
-    success &= vKeyUp(vkCode);
+    vKeyUp(vkCode);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::unicodeKey(wchar_t key, time_t pressed_ms)
+Result InputUtilities::unicodeKey(wchar_t key, time_t pressed_ms)
 {
-    bool success = unicodeKeyDown(key);
+    Result result = unicodeKeyDown(key);
     Sleep(pressed_ms);
-    success &= unicodeKeyUp(key);
+    unicodeKeyUp(key);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::scKey(wchar_t key, time_t pressed_ms)
+Result InputUtilities::scKey(wchar_t key, time_t pressed_ms)
 {
-    bool success = scKeyDown(key);
+    Result result = scKeyDown(key);
     Sleep(pressed_ms);
-    success &= scKeyUp(key);
+    scKeyUp(key);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::Key(Event e, time_t pressed_ms)
+Result InputUtilities::Key(Event e, time_t pressed_ms)
 {
-    bool success = keyDown(e);
+    Result result = keyDown(e);
     Sleep(pressed_ms);
-    success &= keyUp(e);
+    keyUp(e);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::vkMultiKey(const std::vector<WORD>& vkCodes, time_t pressed_ms)
+Result InputUtilities::vkMultiKey(const std::vector<WORD>& vkCodes, time_t pressed_ms)
 {
-    bool success = vkMultiKeyDown(vkCodes);
+    Result result = vkMultiKeyDown(vkCodes);
     Sleep(pressed_ms);
-    success &= vkMultiKeyUp(vkCodes);
+    vkMultiKeyUp(vkCodes);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::unicodeMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms)
+Result InputUtilities::unicodeMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms)
 {
-    bool success = unicodeMultiKeyDown(keys);
+    Result result = unicodeMultiKeyDown(keys);
     Sleep(pressed_ms);
-    success &= unicodeMultiKeyUp(keys);
+    unicodeMultiKeyUp(keys);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::scMultiKey(const std::vector<struct Key>& keys, time_t pressed_ms)
+Result InputUtilities::scMultiKey(const std::vector<struct Key>& keys, time_t pressed_ms)
 {
-    bool success = scMultiKeyDown(keys);
+    Result result = scMultiKeyDown(keys);
     Sleep(pressed_ms);
-    success &= scMultiKeyUp(keys);
+    scMultiKeyUp(keys);
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::typeStr(const std::wstring& str)
+Result InputUtilities::typeStr(const std::wstring& str)
 {
-    bool success = true;
+    Result result;
 
     for (wchar_t ch : str)
-        success &= unicodeKey(ch);
+        result.errorcode &= unicodeKey(ch).errorcode;
 
-    return success;
+    return result;
 }
 
-bool InputUtilities::scTypeStr(const std::wstring& str)
+Result InputUtilities::scTypeStr(const std::wstring& str)
 {
-    bool success = true;
+    Result result;
 
     for (wchar_t ch : str)
-        success &= scKey(ch);
+        result.errorcode &= scKey(ch).errorcode;
 
-    return success;
+    return result;
 }
