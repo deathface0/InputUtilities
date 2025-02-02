@@ -7,13 +7,13 @@
 #include <algorithm>
 #include <iostream>
 
-#define UP						1
-#define DOWN					-1
+#define UP				  1
+#define DOWN			  -1
 
-#define XBUTTON1				0x0001 /* mouse extra button 1 */
-#define XBUTTON2				0x0002 /* mouse extra button 2 */
-#define XBUTTON3				0x0003 /* mouse extra button 3 */
-#define XBUTTON4				0x0004 /* mouse extra button 4 */
+#define XBUTTON1		  0x0001 /* mouse extra button 1 */
+#define XBUTTON2		  0x0002 /* mouse extra button 2 */
+#define XBUTTON3		  0x0003 /* mouse extra button 3 */
+#define XBUTTON4		  0x0004 /* mouse extra button 4 */
 
 #define MOUSE_LEFTDOWN    0x0002 /* left button down */
 #define MOUSE_LEFTUP      0x0004 /* left button up */
@@ -65,7 +65,7 @@ public:
 	InputUtilitiesCore(bool safemode);
 	~InputUtilitiesCore();
 
-	bool SetCursorPos(int x, int y);
+	bool SetCursorPos(int x, int y, bool abs = true);
 	bool MouseEvent(WORD m_event);
 	bool ExtraClickDown(WORD xbutton);
 	bool ExtraClickUp(WORD xbutton);

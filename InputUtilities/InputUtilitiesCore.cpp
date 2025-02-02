@@ -10,7 +10,7 @@ InputUtilitiesCore::~InputUtilitiesCore()
     reset();
 }
 
-bool InputUtilitiesCore::SetCursorPos(int x, int y)
+bool InputUtilitiesCore::SetCursorPos(int x, int y, bool abs)
 {
     POINT p1, p2;
     if (safemode)
@@ -19,9 +19,9 @@ bool InputUtilitiesCore::SetCursorPos(int x, int y)
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
     input.mi.time = 0;
-    input.mi.dx = x * (65536 / GetSystemMetrics(SM_CXSCREEN));
-    input.mi.dy = y * (65536 / GetSystemMetrics(SM_CYSCREEN));
-    input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+    input.mi.dx = abs ? (x * (65536 / GetSystemMetrics(SM_CXSCREEN))) : x;
+    input.mi.dy = abs ? (y * (65536 / GetSystemMetrics(SM_CYSCREEN))) : y;
+    input.mi.dwFlags = abs ? MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE : MOUSEEVENTF_MOVE;
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (safemode) {
