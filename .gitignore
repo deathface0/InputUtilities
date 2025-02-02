@@ -16,6 +16,7 @@ InputUtilities/Source.cpp
 *.sln.docstates
 *.exe
 *.txt
+*.sln
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
