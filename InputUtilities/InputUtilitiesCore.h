@@ -93,7 +93,6 @@ private:
 	bool isExtraMouseButton(DWORD m_event);
 	bool isButtonUp(DWORD button);
 
-	bool removeEvent(const Event& e);
 	void reset();
 
 private:

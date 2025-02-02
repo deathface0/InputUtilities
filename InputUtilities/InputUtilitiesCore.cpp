@@ -49,7 +49,7 @@ bool InputUtilitiesCore::MouseEvent(WORD m_event)
         return success;
 
     if (isButtonUp(m_event))
-        removeEvent({ IU_TYPE::IU_MOUSE, m_event });
+        this->runningInputs.erase({ IU_TYPE::IU_MOUSE, m_event });
     else
         this->runningInputs.insert({ IU_TYPE::IU_MOUSE, m_event });
 
@@ -82,7 +82,7 @@ bool InputUtilitiesCore::ExtraClickUp(WORD xbutton)
         return -1;
 
     if (safemode)
-        removeEvent({ IU_TYPE::IU_MOUSE, xbutton });
+        this->runningInputs.erase({ IU_TYPE::IU_MOUSE, xbutton });
 
     return success;
 }
@@ -123,7 +123,7 @@ bool InputUtilitiesCore::vKeyUp(WORD vkCode)
         return -1;
 
     if (safemode)
-        removeEvent(Event(IU_TYPE::IU_VK, vkCode));
+        this->runningInputs.erase({ IU_TYPE::IU_VK, vkCode });
 
     return success;
 }
@@ -131,7 +131,7 @@ bool InputUtilitiesCore::vKeyUp(WORD vkCode)
 bool InputUtilitiesCore::unicodeKeyDown(wchar_t key)
 {
     WORD wk = static_cast<WORD>(key);
-     
+    
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
     input.ki.dwExtraInfo = GetMessageExtraInfo();
@@ -161,7 +161,7 @@ bool InputUtilitiesCore::unicodeKeyUp(wchar_t key)
         return -1;
 
     if (safemode)
-        removeEvent(Event(IU_TYPE::IU_UC, wk));
+        this->runningInputs.erase({ IU_TYPE::IU_UC, wk });
 
     return success;
 }
@@ -208,7 +208,7 @@ bool InputUtilitiesCore::scKeyUp(wchar_t key)
         return -1;
 
     if (safemode)
-        removeEvent(Event(IU_TYPE::IU_SCK, scancode));
+        this->runningInputs.erase({ IU_TYPE::IU_SCK, scancode });
 
     return success;
 }
@@ -241,8 +241,10 @@ bool InputUtilitiesCore::keyUp(Event e)
     switch (e.type) {
     case IU_TYPE::IU_VK:
         success &= this->vKeyUp(e.iu_event);
+        break;
     case IU_TYPE::IU_UC:
         success &= this->unicodeKeyUp(e.iu_event);
+        break;
     case IU_TYPE::IU_SCK:
         success &= this->scKeyUp(e.iu_event);
         break;
@@ -261,9 +263,6 @@ bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<WORD>& vkCodes)
         success &= this->vKeyDown(vk);
         if (!success)
             break;
-
-        if (safemode)
-            this->runningInputs.insert({ IU_TYPE::IU_VK, vk });
     }
 
     return success;
@@ -277,9 +276,6 @@ bool InputUtilitiesCore::vkMultiKeyUp(const std::vector<WORD>& vkCodes)
         success &= this->vKeyUp(vk);
         if (!success)
             break;
-
-        if (safemode)
-            removeEvent(Event(IU_TYPE::IU_VK, vk));
     }
 
     return success;
@@ -293,9 +289,6 @@ bool InputUtilitiesCore::unicodeMultiKeyDown(const std::vector<wchar_t>& keys)
         success &= this->unicodeKeyDown(key);
         if (!success)
             break;
-
-        if (safemode)
-            this->runningInputs.insert({ IU_TYPE::IU_UC, static_cast<WORD>(key) });
     }
 
     return success;
@@ -309,9 +302,6 @@ bool InputUtilitiesCore::unicodeMultiKeyUp(const std::vector<wchar_t>& keys)
         success &= this->unicodeKeyUp(key);
         if (!success)
             break;
-
-        if (safemode)
-            removeEvent(Event(IU_TYPE::IU_UC, static_cast<WORD>(key)));
     }
 
     return success;
@@ -323,7 +313,6 @@ bool InputUtilitiesCore::scMultiKeyDown(const std::vector<Key>& keys)
 
     for (const auto& key : keys) {
         success &= key.isVK ? this->vKeyDown(key.vkKey) : this->scKeyDown(key.charKey);
-
         if (!success)
             break;
     }
@@ -337,7 +326,6 @@ bool InputUtilitiesCore::scMultiKeyUp(const std::vector<Key>& keys)
 
     for (const auto& key : keys) {
         success &= key.isVK ? this->vKeyUp(key.vkKey) : this->scKeyUp(key.charKey);
-
         if (!success)
             break;
     }
@@ -377,11 +365,6 @@ bool InputUtilitiesCore::isExtraMouseButton(DWORD m_event)
 bool InputUtilitiesCore::isButtonUp(DWORD button)
 {
     return (button == MOUSEEVENTF_LEFTUP || button == MOUSEEVENTF_RIGHTUP || button == MOUSEEVENTF_MIDDLEUP) ? true : false;
-}
-
-bool InputUtilitiesCore::removeEvent(const Event& e)
-{
-    return this->runningInputs.erase(e);
 }
 
 void InputUtilitiesCore::reset()
