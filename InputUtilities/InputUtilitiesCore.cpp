@@ -34,6 +34,44 @@ Result InputUtilitiesCore::SetCursorPos(int x, int y, bool abs)
     return Result();
 }
 
+Result InputUtilitiesCore::SetCursorPos(int x, int y, int steps, int delay, bool abs)
+{
+    POINT p1, p2;
+    GetCursorPos(&p1);
+
+    int startX = p1.x;
+    int startY = p1.y;
+    int endX = x;
+    int endY = y;
+
+    for (int i = 1; i <= steps; ++i)
+    {
+        double t = static_cast<double>(i) / steps; // Progress from 0.0 to 1.0
+
+        // Smooth interpolation using ease-in-out formula
+        double smoothT = t * t * (3 - 2 * t);
+
+        int newX = startX + static_cast<int>((endX - startX) * smoothT);
+        int newY = startY + static_cast<int>((endY - startY) * smoothT);
+
+        INPUT input = { 0 };
+        input.type = INPUT_MOUSE;
+        input.mi.time = 0;
+        input.mi.dx = abs ? (newX * (65536 / GetSystemMetrics(SM_CXSCREEN))) : newX;
+        input.mi.dy = abs ? (newY * (65536 / GetSystemMetrics(SM_CYSCREEN))) : newY;
+        input.mi.dwFlags = abs ? MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE : MOUSEEVENTF_MOVE;
+
+        SendInput(1, &input, sizeof(INPUT));
+
+        Sleep(delay);
+    }
+
+    GetCursorPos(&p2);
+    bool success = (p1.x != p2.x && p1.y != p2.y);
+    return !success ? MOUSE_SAME_POSITON : SUCCESS;
+}
+
+
 Result InputUtilitiesCore::MouseEvent(WORD m_event)
 {
     if (isExtraMouseButton(m_event))

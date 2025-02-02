@@ -12,6 +12,7 @@ public:
 	~InputUtilitiesCore();
 
 	Result SetCursorPos(int x, int y, bool abs = true);
+	Result SetCursorPos(int x, int y, int steps, int delay, bool abs = true);
 	Result MouseEvent(WORD m_event);
 	Result ExtraClickDown(WORD xbutton);
 	Result ExtraClickUp(WORD xbutton);
