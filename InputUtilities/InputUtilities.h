@@ -20,6 +20,7 @@ public:
 	Result vkMultiKey(const std::vector<WORD>& vkCodes, time_t pressed_ms = 0);
 	Result unicodeMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms = 0);
 	Result scMultiKey(const std::vector<struct Key>& keys, time_t pressed_ms = 0);
+	Result multiKey(const std::vector<Event>& keys, time_t pressed_ms = 0);
 
 	Result typeStr(const std::wstring& str);
 	Result scTypeStr(const std::wstring& str);

@@ -31,6 +31,8 @@ public:
 	Result unicodeMultiKeyUp(const std::vector<wchar_t>& keys);
 	Result scMultiKeyDown(const std::vector<Key>& keys);
 	Result scMultiKeyUp(const std::vector<Key>& keys);
+	Result multiKeyDown(const std::vector<Event>& keys);
+	Result multiKeyUp(const std::vector<Event>& keys);
 
 	std::string get_utf8(const std::wstring& wstr);
 	std::wstring get_utf16(const std::string& str);

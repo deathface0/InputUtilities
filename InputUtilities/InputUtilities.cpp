@@ -99,6 +99,15 @@ Result InputUtilities::scMultiKey(const std::vector<struct Key>& keys, time_t pr
     return result;
 }
 
+Result InputUtilities::multiKey(const std::vector<Event>& keys, time_t pressed_ms)
+{
+    Result result = multiKeyDown(keys);
+    Sleep(pressed_ms);
+    multiKeyUp(keys);
+
+    return result;
+}
+
 Result InputUtilities::typeStr(const std::wstring& str)
 {
     Result result;

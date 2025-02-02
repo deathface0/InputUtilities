@@ -39,11 +39,11 @@ enum MWheelDir {
 	LEFT = -1
 };
 
-enum IU_TYPE {
-	IU_MOUSE = 0x01,
-	IU_UC,
-	IU_VK,
-	IU_SC
+enum InputType {
+	MOUSE = 0x01,
+	UC,
+	VK,
+	SC
 };
 
 struct Key {
@@ -56,14 +56,18 @@ struct Key {
 	Key(wchar_t ch) : isVK(false), charKey(ch) {}
 	Key(char ch) : isVK(false), charKey(static_cast<wchar_t>(ch)) {}
 	Key(int vk) : isVK(true), vkKey(vk) {}
+
+	bool operator==(const Key& other) const {
+		return isVK == other.isVK && (isVK ? vkKey == other.vkKey : charKey == other.charKey);
+	}
 };
 
 struct Event {
-	IU_TYPE type;
-	WORD iu_event;
+	InputType type;
+	Key iu_event;
 
-	Event(IU_TYPE type, WORD iu_event)
-		:type(type), iu_event(iu_event) {}
+	Event(InputType type, Key iu_event)
+		: type(type), iu_event(iu_event) {}
 
 	bool operator==(const Event& other) const {
 		return type == other.type && iu_event == other.iu_event;
@@ -72,9 +76,16 @@ struct Event {
 
 namespace std {
 	template<>
+	struct hash<Key> {
+		size_t operator()(const Key& k) const {
+			return hash<bool>()(k.isVK) ^ (k.isVK ? hash<WORD>()(k.vkKey) : hash<wchar_t>()(k.charKey));
+		}
+	};
+
+	template<>
 	struct hash<Event> {
 		size_t operator()(const Event& e) const {
-			return hash<int>()(static_cast<int>(e.type)) ^ hash<WORD>()(e.iu_event);
+			return hash<int>()(static_cast<int>(e.type)) ^ hash<Key>()(e.iu_event);
 		}
 	};
 }

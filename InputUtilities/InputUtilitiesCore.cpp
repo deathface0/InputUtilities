@@ -48,9 +48,9 @@ Result InputUtilitiesCore::MouseEvent(WORD m_event)
         return Result();
 
     if (isButtonUp(m_event))
-        this->runningInputs.erase({ IU_TYPE::IU_MOUSE, m_event });
+        this->runningInputs.erase({ InputType::MOUSE, m_event });
     else
-        this->runningInputs.insert({ IU_TYPE::IU_MOUSE, m_event });
+        this->runningInputs.insert({ InputType::MOUSE, m_event });
 
     return Result();
 }
@@ -64,7 +64,7 @@ Result InputUtilitiesCore::ExtraClickDown(WORD xbutton)
 
     bool success = SendInput(1, &input, sizeof(INPUT));
     if (success && safemode)
-        this->runningInputs.insert({ IU_TYPE::IU_MOUSE, xbutton });
+        this->runningInputs.insert({ InputType::MOUSE, xbutton });
 
     return Result();
 }
@@ -78,7 +78,7 @@ Result InputUtilitiesCore::ExtraClickUp(WORD xbutton)
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success && safemode)
-        this->runningInputs.erase({ IU_TYPE::IU_MOUSE, xbutton });
+        this->runningInputs.erase({ InputType::MOUSE, xbutton });
 
     return Result();
 }
@@ -103,7 +103,7 @@ Result InputUtilitiesCore::vKeyDown(WORD vkCode)
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success && safemode)
-        this->runningInputs.insert({ IU_TYPE::IU_VK, vkCode });
+        this->runningInputs.insert({ InputType::VK, vkCode });
 
     return Result();
 }
@@ -117,7 +117,7 @@ Result InputUtilitiesCore::vKeyUp(WORD vkCode)
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success && safemode)
-        this->runningInputs.erase({ IU_TYPE::IU_VK, vkCode });
+        this->runningInputs.erase({ InputType::VK, vkCode });
 
     return Result();
 }
@@ -134,7 +134,7 @@ Result InputUtilitiesCore::unicodeKeyDown(wchar_t key)
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success && safemode)
-        this->runningInputs.insert({ IU_TYPE::IU_UC, wk });
+        this->runningInputs.insert({ InputType::UC, wk });
 
     return Result();
 }
@@ -151,7 +151,7 @@ Result InputUtilitiesCore::unicodeKeyUp(wchar_t key)
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success && safemode)
-        this->runningInputs.erase({ IU_TYPE::IU_UC, wk });
+        this->runningInputs.erase({ InputType::UC, wk });
 
     return Result();
 }
@@ -172,7 +172,7 @@ Result InputUtilitiesCore::scKeyDown(wchar_t key)
     bool success = (SendInput(1, &input, sizeof(INPUT)) == 1);
 
     if (success && safemode)
-        this->runningInputs.insert({ IU_TYPE::IU_SC, scancode });
+        this->runningInputs.insert({ InputType::SC, scancode });
 
     return Result();
 }
@@ -194,7 +194,7 @@ Result InputUtilitiesCore::scKeyUp(wchar_t key)
     bool success = SendInput(1, &input, sizeof(INPUT));
 
     if (success && safemode)
-        this->runningInputs.erase({ IU_TYPE::IU_SC, scancode });
+        this->runningInputs.erase({ InputType::SC, scancode });
 
     return Result();
 }
@@ -204,14 +204,14 @@ Result InputUtilitiesCore::keyDown(Event e)
     Result result;
 
     switch (e.type) {
-    case IU_TYPE::IU_VK:
-        result = this->vKeyDown(e.iu_event);
+    case InputType::VK:
+        result = this->vKeyDown(e.iu_event.vkKey);
         break;
-    case IU_TYPE::IU_UC:
-        result = this->unicodeKeyDown(e.iu_event);
+    case InputType::UC:
+        result = this->unicodeKeyDown(e.iu_event.charKey);
         break;
-    case IU_TYPE::IU_SC:
-        result = this->scKeyDown(e.iu_event);
+    case InputType::SC:
+        result = this->scKeyDown(e.iu_event.charKey);
         break;
     default:
         result.errorcode = UNDEFINED_INPUT_TYPE;
@@ -225,14 +225,14 @@ Result InputUtilitiesCore::keyUp(Event e)
     Result result;
 
     switch (e.type) {
-    case IU_TYPE::IU_VK:
-        result = this->vKeyUp(e.iu_event);
+    case InputType::VK:
+        result = this->vKeyUp(e.iu_event.vkKey);
         break;
-    case IU_TYPE::IU_UC:
-        result = this->unicodeKeyUp(e.iu_event);
+    case InputType::UC:
+        result = this->unicodeKeyUp(e.iu_event.charKey);
         break;
-    case IU_TYPE::IU_SC:
-        result = this->scKeyUp(e.iu_event);
+    case InputType::SC:
+        result = this->scKeyUp(e.iu_event.charKey);
         break;
     default:
         result.errorcode = UNDEFINED_INPUT_TYPE;
@@ -319,6 +319,32 @@ Result InputUtilitiesCore::scMultiKeyUp(const std::vector<Key>& keys)
     return result;
 }
 
+Result InputUtilitiesCore::multiKeyDown(const std::vector<Event>& keys)
+{
+    Result result;
+
+    for (const auto& key : keys) {
+        result = this->keyDown(key);
+        if (result.errorcode != 0x0)
+            break;
+    }
+
+    return result;
+}
+
+Result InputUtilitiesCore::multiKeyUp(const std::vector<Event>& keys)
+{
+    Result result;
+
+    for (const auto& key : keys) {
+        result = this->keyUp(key);
+        if (result.errorcode != 0x0)
+            break;
+    }
+
+    return result;
+}
+
 std::string InputUtilitiesCore::get_utf8(const std::wstring& wstr)
 {
     if (wstr.empty()) return std::string();
@@ -359,17 +385,17 @@ void InputUtilitiesCore::reset()
     {
         switch (input.type)
         {
-        case IU_TYPE::IU_VK:
-            vKeyUp(input.iu_event);
+        case InputType::VK:
+            vKeyUp(input.iu_event.vkKey);
             break;
-        case IU_TYPE::IU_UC:
-            unicodeKeyUp(input.iu_event);
+        case InputType::UC:
+            unicodeKeyUp(input.iu_event.charKey);
             break;
-        case IU_TYPE::IU_SC:
-            scKeyUp(input.iu_event);
+        case InputType::SC:
+            scKeyUp(input.iu_event.charKey);
             break;
-        case IU_TYPE::IU_MOUSE:
-            MouseEvent(input.iu_event << 1); //Bit shift left to obtain UP equivalence
+        case InputType::MOUSE:
+            MouseEvent(input.iu_event.vkKey << 1); //Bit shift left to obtain UP equivalence
             break;
         }
     }
