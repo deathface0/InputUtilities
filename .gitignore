@@ -3,16 +3,19 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Source file to ignore
+InputUtilities/Source.cpp
+
 # User-specific files
 *.rsuser
 *.suo
+*.vcxproj
+*.filters
 *.user
 *.userosscache
 *.sln.docstates
 *.exe
 *.txt
-
-InputUtilities/Source.cpp
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

@@ -51,7 +51,7 @@ bool InputUtilitiesCore::MouseEvent(WORD m_event)
     if (isButtonUp(m_event))
         removeEvent({ IU_TYPE::IU_MOUSE, m_event });
     else
-        this->runningInputs.push_back({ IU_TYPE::IU_MOUSE, m_event });
+        this->runningInputs.insert({ IU_TYPE::IU_MOUSE, m_event });
 
     return success;
 }
@@ -65,7 +65,7 @@ bool InputUtilitiesCore::ExtraClickDown(WORD xbutton)
 
     bool success = SendInput(1, &input, sizeof(INPUT));
     if (success && safemode)
-        this->runningInputs.push_back({ IU_TYPE::IU_MOUSE, xbutton });
+        this->runningInputs.insert({ IU_TYPE::IU_MOUSE, xbutton });
 
     return success;
 }
@@ -107,7 +107,7 @@ bool InputUtilitiesCore::vKeyDown(WORD vkCode)
         return -1;
 
     if (safemode)
-        this->runningInputs.push_back({ IU_TYPE::IU_VK, vkCode });
+        this->runningInputs.insert({ IU_TYPE::IU_VK, vkCode });
 
     return success;
 }
@@ -142,7 +142,7 @@ bool InputUtilitiesCore::unicodeKeyDown(wchar_t key)
         return -1;
 
     if (safemode)
-        this->runningInputs.push_back({ IU_TYPE::IU_UC, wk });
+        this->runningInputs.insert({ IU_TYPE::IU_UC, wk });
 
     return success;
 }
@@ -184,7 +184,7 @@ bool InputUtilitiesCore::scKeyDown(wchar_t key)
         return false;
 
     if (safemode)
-        this->runningInputs.push_back({ IU_TYPE::IU_SCK, scancode });
+        this->runningInputs.insert({ IU_TYPE::IU_SCK, scancode });
 
     return success;
 }
@@ -263,7 +263,7 @@ bool InputUtilitiesCore::vkMultiKeyDown(const std::vector<WORD>& vkCodes)
             break;
 
         if (safemode)
-            this->runningInputs.push_back({ IU_TYPE::IU_VK, vk });
+            this->runningInputs.insert({ IU_TYPE::IU_VK, vk });
     }
 
     return success;
@@ -295,7 +295,7 @@ bool InputUtilitiesCore::unicodeMultiKeyDown(const std::vector<wchar_t>& keys)
             break;
 
         if (safemode)
-            this->runningInputs.push_back({ IU_TYPE::IU_UC, static_cast<WORD>(key) });
+            this->runningInputs.insert({ IU_TYPE::IU_UC, static_cast<WORD>(key) });
     }
 
     return success;
@@ -381,17 +381,7 @@ bool InputUtilitiesCore::isButtonUp(DWORD button)
 
 bool InputUtilitiesCore::removeEvent(const Event& e)
 {
-    auto originalSize = runningInputs.size();
-
-    this->runningInputs.erase(
-        std::remove_if(runningInputs.begin(), runningInputs.end(),
-            [&e](const Event& ev) {
-                return ev.type == e.type && ev.iu_event == e.iu_event;
-            }),
-        runningInputs.end()
-    );
-
-    return runningInputs.size() < originalSize;
+    return this->runningInputs.erase(e);
 }
 
 void InputUtilitiesCore::reset()

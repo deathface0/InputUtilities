@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <stdexcept>
 #include <vector>
+#include <unordered_set>
 #include <algorithm>
 #include <iostream>
 
@@ -21,8 +22,7 @@
 #define MOUSE_MIDDLEDOWN  0x0020 /* middle button down */
 #define MOUSE_MIDDLEUP    0x0040 /* middle button up */
 
-enum IU_TYPE
-{
+enum IU_TYPE {
 	IU_MOUSE = 0x01, IU_UC, IU_VK, IU_SCK
 };
 
@@ -44,7 +44,20 @@ struct Event {
 
 	Event(IU_TYPE type, WORD iu_event)
 		:type(type), iu_event(iu_event) {}
+
+	bool operator==(const Event& other) const {
+		return type == other.type && iu_event == other.iu_event;
+	}
 };
+
+namespace std {
+	template<>
+	struct hash<Event> {
+		size_t operator()(const Event& e) const {
+			return hash<int>()(static_cast<int>(e.type)) ^ hash<WORD>()(e.iu_event);
+		}
+	};
+}
 
 class InputUtilitiesCore
 {
@@ -84,6 +97,6 @@ private:
 	void reset();
 
 private:
-	std::vector<Event> runningInputs;
+	std::unordered_set<Event> runningInputs;
 	bool safemode;
 };
