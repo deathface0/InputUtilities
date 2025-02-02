@@ -16,7 +16,8 @@ public:
 	Result MouseEvent(WORD m_event);
 	Result ExtraClickDown(WORD xbutton);
 	Result ExtraClickUp(WORD xbutton);
-	Result MouseWheelRoll(int scrolls, MWheelDir delta, MWheelAxis dir = VERTICAL);
+	Result MouseWheelRoll(int scrolls, MWheelDir dir, UINT delta = WHEEL_DELTA, MWheelAxis axis = VERTICAL);
+	Result MouseWheelRoll(int scrolls, int delay, MWheelDir dir, UINT delta = WHEEL_DELTA, MWheelAxis axis = VERTICAL);
 	
 	Result vKeyDown(WORD vkCode);
 	Result vKeyUp(WORD vkCode);

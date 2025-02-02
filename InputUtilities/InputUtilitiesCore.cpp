@@ -121,13 +121,28 @@ Result InputUtilitiesCore::ExtraClickUp(WORD xbutton)
     return Result();
 }
 
-Result InputUtilitiesCore::MouseWheelRoll(int scrolls, MWheelDir delta, MWheelAxis dir)
+Result InputUtilitiesCore::MouseWheelRoll(int scrolls, MWheelDir dir, UINT delta, MWheelAxis axis)
 {
     INPUT input = { 0 };
     input.type = INPUT_MOUSE;
-    input.mi.mouseData = scrolls * delta * WHEEL_DELTA;
-    input.mi.dwFlags = dir;
+    input.mi.mouseData = scrolls * dir * delta;
+    input.mi.dwFlags = axis;
     SendInput(1, &input, sizeof(INPUT));
+
+    return Result();
+}
+
+Result InputUtilitiesCore::MouseWheelRoll(int scrolls, int delay, MWheelDir dir, UINT delta, MWheelAxis axis)
+{
+    for (int i = 0; i < scrolls; i++) {
+        INPUT input = { 0 };
+        input.type = INPUT_MOUSE;
+        input.mi.mouseData = dir * delta;
+        input.mi.dwFlags = axis;
+        SendInput(1, &input, sizeof(INPUT));
+
+        Sleep(delay);
+    }
 
     return Result();
 }
