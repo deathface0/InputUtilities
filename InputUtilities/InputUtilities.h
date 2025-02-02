@@ -19,7 +19,7 @@ public:
 	bool Key(Event e, time_t pressed_ms = 0);
 	bool vkMultiKey(const std::vector<WORD>& vkCodes, time_t pressed_ms = 0);
 	bool unicodeMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms = 0);
-	bool scMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms = 0);
+	bool scMultiKey(const std::vector<struct Key>& keys, time_t pressed_ms = 0);
 
 	bool typeStr(const std::wstring& str);
 	bool scTypeStr(const std::wstring& str);

@@ -14,16 +14,28 @@
 #define XBUTTON3				0x0003 /* mouse extra button 3 */
 #define XBUTTON4				0x0004 /* mouse extra button 4 */
 
-#define MOUSEEVENTF_LEFTDOWN    0x0002 /* left button down */
-#define MOUSEEVENTF_LEFTUP      0x0004 /* left button up */
-#define MOUSEEVENTF_RIGHTDOWN   0x0008 /* right button down */
-#define MOUSEEVENTF_RIGHTUP     0x0010 /* right button up */
-#define MOUSEEVENTF_MIDDLEDOWN  0x0020 /* middle button down */
-#define MOUSEEVENTF_MIDDLEUP    0x0040 /* middle button up */
+#define MOUSE_LEFTDOWN    0x0002 /* left button down */
+#define MOUSE_LEFTUP      0x0004 /* left button up */
+#define MOUSE_RIGHTDOWN   0x0008 /* right button down */
+#define MOUSE_RIGHTUP     0x0010 /* right button up */
+#define MOUSE_MIDDLEDOWN  0x0020 /* middle button down */
+#define MOUSE_MIDDLEUP    0x0040 /* middle button up */
 
 enum IU_TYPE
 {
 	IU_MOUSE = 0x01, IU_UC, IU_VK, IU_SCK
+};
+
+struct Key {
+	bool isVK;
+	union {
+		wchar_t charKey;
+		WORD vkKey;
+	};
+
+	Key(wchar_t ch) : isVK(false), charKey(ch) {}
+	Key(char ch) : isVK(false), charKey(static_cast<wchar_t>(ch)) {}
+	Key(int vk) : isVK(true), vkKey(vk) {}
 };
 
 struct Event {
@@ -58,8 +70,8 @@ public:
 	bool vkMultiKeyUp(const std::vector<WORD>& vkCodes);
 	bool unicodeMultiKeyDown(const std::vector<wchar_t>& keys);
 	bool unicodeMultiKeyUp(const std::vector<wchar_t>& keys);
-	bool scMultiKeyDown(const std::vector<wchar_t>& keys);
-	bool scMultiKeyUp(const std::vector<wchar_t>& keys);
+	bool scMultiKeyDown(const std::vector<Key>& keys);
+	bool scMultiKeyUp(const std::vector<Key>& keys);
 
 	std::string get_utf8(const std::wstring& wstr);
 	std::wstring get_utf16(const std::string& str);

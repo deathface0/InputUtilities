@@ -168,26 +168,27 @@ bool InputUtilitiesCore::unicodeKeyUp(wchar_t key)
 
 bool InputUtilitiesCore::scKeyDown(wchar_t key)
 {
-    BYTE vk = VkKeyScanW(key);
+    WORD vk = LOBYTE(VkKeyScanW(key));
     if (vk == 0xFF)
         return false;
 
-    WORD scancode = MapVirtualKeyEx(vk & 0xFF, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
+    WORD scancode = MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
 
     INPUT input = { 0 };
     input.type = INPUT_KEYBOARD;
-    input.ki.wScan = scancode;               
-    input.ki.dwFlags = KEYEVENTF_SCANCODE;   
+    input.ki.wScan = scancode;
+    input.ki.dwFlags = KEYEVENTF_SCANCODE;
     input.ki.dwExtraInfo = GetMessageExtraInfo();
-    bool success = SendInput(1, &input, sizeof(INPUT));
+    bool success = (SendInput(1, &input, sizeof(INPUT)) == 1);
     if (!success)
-        return -1;
+        return false;
 
     if (safemode)
         this->runningInputs.push_back({ IU_TYPE::IU_SCK, scancode });
 
     return success;
 }
+
 
 bool InputUtilitiesCore::scKeyUp(wchar_t key)
 {
@@ -316,33 +317,29 @@ bool InputUtilitiesCore::unicodeMultiKeyUp(const std::vector<wchar_t>& keys)
     return success;
 }
 
-bool InputUtilitiesCore::scMultiKeyDown(const std::vector<wchar_t>& keys)
+bool InputUtilitiesCore::scMultiKeyDown(const std::vector<Key>& keys)
 {
     bool success = true;
 
     for (const auto& key : keys) {
-        success &= this->scKeyDown(key);
+        success &= key.isVK ? this->vKeyDown(key.vkKey) : this->scKeyDown(key.charKey);
+
         if (!success)
             break;
-
-        if (safemode)
-            this->runningInputs.push_back({ IU_TYPE::IU_SCK, static_cast<WORD>(key) });
     }
 
     return success;
 }
 
-bool InputUtilitiesCore::scMultiKeyUp(const std::vector<wchar_t>& keys)
+bool InputUtilitiesCore::scMultiKeyUp(const std::vector<Key>& keys)
 {
     bool success = true;
 
     for (const auto& key : keys) {
-        success &= this->scKeyUp(key);
+        success &= key.isVK ? this->vKeyUp(key.vkKey) : this->scKeyUp(key.charKey);
+
         if (!success)
             break;
-
-        if (safemode)
-            removeEvent({ IU_TYPE::IU_SCK, static_cast<WORD>(key) });
     }
 
     return success;

@@ -32,5 +32,8 @@
     <ClInclude Include="InputUtilitiesCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -90,7 +90,7 @@ bool InputUtilities::unicodeMultiKey(const std::vector<wchar_t>& keys, time_t pr
     return success;
 }
 
-bool InputUtilities::scMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms)
+bool InputUtilities::scMultiKey(const std::vector<struct Key>& keys, time_t pressed_ms)
 {
     bool success = scMultiKeyDown(keys);
     Sleep(pressed_ms);
