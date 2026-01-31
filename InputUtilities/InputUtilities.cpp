@@ -1,129 +1,93 @@
 #include "InputUtilities.h"
 
-Result InputUtilities::leftClick(time_t pressed_ms)
-{
-    Result result = MouseEvent(LEFTDOWN);
-    Sleep(pressed_ms);
-    MouseEvent(MOUSEEVENTF_LEFTUP);
+#define PRESS_RELEASE_LOGIC(downCall, upCall) \
+    InputResult r1 = downCall; \
+    if (pressed_ms > 0) Sleep(pressed_ms); \
+    InputResult r2 = upCall; \
+    return (r1 != InputResult::Success) ? r1 : r2;
 
-    return result;
+InputResult InputUtilities::leftClick(int pressed_ms)
+{
+    PRESS_RELEASE_LOGIC(MouseEvent(MOUSEEVENTF_LEFTDOWN), MouseEvent(MOUSEEVENTF_LEFTUP));
 }
 
-Result InputUtilities::rightClick(time_t pressed_ms)
+InputResult InputUtilities::rightClick(int pressed_ms)
 {
-    Result result = MouseEvent(RIGHTDOWN);
-    Sleep(pressed_ms);
-    MouseEvent(MOUSEEVENTF_RIGHTUP);
-
-    return result;
+    PRESS_RELEASE_LOGIC(MouseEvent(MOUSEEVENTF_RIGHTDOWN), MouseEvent(MOUSEEVENTF_RIGHTUP));
 }
 
-Result InputUtilities::middleClick(time_t pressed_ms)
+InputResult InputUtilities::middleClick(int pressed_ms)
 {
-    Result result = MouseEvent(MIDDLEDOWN);
-    Sleep(pressed_ms);
-    MouseEvent(MOUSEEVENTF_MIDDLEUP);
-
-    return result;
+    PRESS_RELEASE_LOGIC(MouseEvent(MOUSEEVENTF_MIDDLEDOWN), MouseEvent(MOUSEEVENTF_MIDDLEUP));
 }
 
-Result InputUtilities::extraClick(UINT button, time_t pressed_ms)
+InputResult InputUtilities::extraClick(UINT button, int pressed_ms)
 {
-    Result result = ExtraClickDown(button);
-    Sleep(pressed_ms);
-    ExtraClickUp(button);
-
-    return result;
+    PRESS_RELEASE_LOGIC(MouseEvent(MOUSEEVENTF_XDOWN, button), MouseEvent(MOUSEEVENTF_XUP, button));
 }
 
-Result InputUtilities::vKey(WORD vkCode, time_t pressed_ms)
+InputResult InputUtilities::vKey(WORD vkCode, int pressed_ms)
 {
-    Result result = vKeyDown(vkCode);
-    Sleep(pressed_ms);
-    vKeyUp(vkCode);
-
-    return result;
+    PRESS_RELEASE_LOGIC(vKeyDown(vkCode), vKeyUp(vkCode));
 }
 
-Result InputUtilities::unicodeKey(wchar_t key, time_t pressed_ms)
+InputResult InputUtilities::unicodeKey(wchar_t key, int pressed_ms)
 {
-    Result result = unicodeKeyDown(key);
-    Sleep(pressed_ms);
-    unicodeKeyUp(key);
-
-    return result;
+    PRESS_RELEASE_LOGIC(unicodeKeyDown(key), unicodeKeyUp(key));
 }
 
-Result InputUtilities::scKey(wchar_t key, time_t pressed_ms)
+InputResult InputUtilities::scKey(wchar_t key, int pressed_ms)
 {
-    Result result = scKeyDown(key);
-    Sleep(pressed_ms);
-    scKeyUp(key);
-
-    return result;
+    PRESS_RELEASE_LOGIC(scKeyDown(key), scKeyUp(key));
 }
 
-Result InputUtilities::Key(Event e, time_t pressed_ms)
+InputResult InputUtilities::Key(Event e, int pressed_ms)
 {
-    Result result = keyDown(e);
-    Sleep(pressed_ms);
-    keyUp(e);
-
-    return result;
+    PRESS_RELEASE_LOGIC(keyDown(e), keyUp(e));
 }
 
-Result InputUtilities::vkMultiKey(const std::vector<WORD>& vkCodes, time_t pressed_ms)
+InputResult InputUtilities::vkMultiKey(const std::vector<WORD>& vkCodes, int pressed_ms)
 {
-    Result result = vkMultiKeyDown(vkCodes);
-    Sleep(pressed_ms);
-    vkMultiKeyUp(vkCodes);
-
-    return result;
+    PRESS_RELEASE_LOGIC(vkMultiKeyDown(vkCodes), vkMultiKeyUp(vkCodes));
 }
 
-Result InputUtilities::unicodeMultiKey(const std::vector<wchar_t>& keys, time_t pressed_ms)
+InputResult InputUtilities::unicodeMultiKey(const std::vector<wchar_t>& keys, int pressed_ms)
 {
-    Result result = unicodeMultiKeyDown(keys);
-    Sleep(pressed_ms);
-    unicodeMultiKeyUp(keys);
-
-    return result;
+    PRESS_RELEASE_LOGIC(unicodeMultiKeyDown(keys), unicodeMultiKeyUp(keys));
 }
 
-Result InputUtilities::scMultiKey(const std::vector<struct Key>& keys, time_t pressed_ms)
+InputResult InputUtilities::scMultiKey(const std::vector<wchar_t>& keys, int pressed_ms)
 {
-    Result result = scMultiKeyDown(keys);
-    Sleep(pressed_ms);
-    scMultiKeyUp(keys);
-
-    return result;
+    PRESS_RELEASE_LOGIC(scMultiKeyDown(keys), scMultiKeyUp(keys));
 }
 
-Result InputUtilities::multiKey(const std::vector<Event>& keys, time_t pressed_ms)
+InputResult InputUtilities::multiKey(const std::vector<Event>& keys, int pressed_ms)
 {
-    Result result = multiKeyDown(keys);
-    Sleep(pressed_ms);
-    multiKeyUp(keys);
-
-    return result;
+    PRESS_RELEASE_LOGIC(multiKeyDown(keys), multiKeyUp(keys));
 }
 
-Result InputUtilities::typeStr(const std::wstring& str)
+InputResult InputUtilities::typeStr(const std::wstring& str, int char_delay)
 {
-    Result result;
+    InputResult res = Success;
+    for (size_t i = 0; i < str.length(); ++i) {
+        res = unicodeKey(str[i]);
+        if (res != Success) break;
 
-    for (wchar_t ch : str)
-        result.errorcode &= unicodeKey(ch).errorcode;
-
-    return result;
+        if (char_delay > 0 && i < str.length() - 1) Sleep(char_delay);
+    }
+    return res;
 }
 
-Result InputUtilities::scTypeStr(const std::wstring& str)
+InputResult InputUtilities::scTypeStr(const std::wstring& str, int char_delay)
 {
-    Result result;
+    InputResult res = Success;
+    for (size_t i = 0; i < str.length(); ++i) {
+        res = scKey(str[i]);
+        if (res != Success) break;
 
-    for (wchar_t ch : str)
-        result.errorcode &= scKey(ch).errorcode;
-
-    return result;
+        if (char_delay > 0 && i < str.length() - 1) Sleep(char_delay);
+    }
+    return res;
 }
+
+#undef PRESS_RELEASE_LOGIC
