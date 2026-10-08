@@ -29,6 +29,7 @@ endif()
 add_library(inpututil
     src/InputUtilities.cpp
     src/InputUtilitiesCore.cpp
+    src/Status.cpp
 )
 add_library(inpututil::inpututil ALIAS inpututil)
 
