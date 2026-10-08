@@ -15,7 +15,6 @@ target_include_directories(inpututil_doctest SYSTEM INTERFACE ${CMAKE_CURRENT_BI
 
 add_executable(inpututil_tests
     main.cpp
-    test_smoke.cpp
     test_status.cpp
     test_backend.cpp
     test_session.cpp

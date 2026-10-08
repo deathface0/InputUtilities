@@ -30,8 +30,6 @@ add_library(inpututil
     src/EmergencyRelease.cpp
     src/Hold.cpp
     src/Input.cpp
-    src/InputUtilities.cpp
-    src/InputUtilitiesCore.cpp
     src/Keyboard.cpp
     src/KeyNames.cpp
     src/Motion.cpp
