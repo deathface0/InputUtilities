@@ -29,6 +29,7 @@ endif()
 add_library(inpututil
     src/InputUtilities.cpp
     src/InputUtilitiesCore.cpp
+    src/KeyNames.cpp
     src/Status.cpp
     src/Win32Backend.cpp
     src/detail/InputBuilders.cpp

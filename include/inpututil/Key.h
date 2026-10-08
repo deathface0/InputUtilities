@@ -1,6 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace inpututil {
 
@@ -25,6 +29,14 @@ public:
         return {Kind::Scan, static_cast<std::uint16_t>(scanCode & 0xFF),
                 extended || (scanCode & 0xFF00) == 0xE000};
     }
+
+    /// Key from its name: "Ctrl", "f5", "PgUp", "AltGr", "+", ... (case
+    /// insensitive), or a raw code: "vk:0x41", "sc:0x11", "sc:0xE04B".
+    static std::optional<Key> parse(std::string_view name);
+
+    /// Canonical name ("Ctrl", "F5", "RAlt"), or the raw form ("vk:0xE9",
+    /// "sc:0x76") for keys without one. Key::parse(k.name()) == k always holds.
+    std::string name() const;
 
     constexpr bool valid() const noexcept { return kind_ != Kind::None && code_ != 0; }
     constexpr bool isScanCode() const noexcept { return kind_ == Kind::Scan; }
@@ -206,5 +218,19 @@ inline constexpr Key Key::MediaNext = Key::fromVk(0xB0);
 inline constexpr Key Key::MediaPrev = Key::fromVk(0xB1);
 inline constexpr Key Key::MediaStop = Key::fromVk(0xB2);
 inline constexpr Key Key::MediaPlayPause = Key::fromVk(0xB3);
+
+/// Keys pressed together, in press order (released in reverse).
+struct Chord {
+    std::vector<Key> keys;
+
+    /// "Ctrl+Shift+Esc", " alt + f4 ", "Ctrl++" (Ctrl and Plus). nullopt if a
+    /// name is unknown, a key repeats or the text is empty or ends with '+'.
+    static std::optional<Chord> parse(std::string_view text);
+
+    /// Key names joined with '+'; Chord::parse(c.toString()) == c.
+    std::string toString() const;
+
+    friend bool operator==(const Chord&, const Chord&) = default;
+};
 
 } // namespace inpututil
