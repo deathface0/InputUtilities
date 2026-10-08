@@ -4,6 +4,7 @@
 // was printed before the process went away.
 #include <windows.h>
 
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
@@ -39,6 +40,12 @@ void silenceCrashReporting() {
         std::fflush(stdout);
         TerminateProcess(GetCurrentProcess(), 99);
         return EXCEPTION_EXECUTE_HANDLER;
+    });
+    // abort(): end with a normal exit code instead of the CRT's fast-fail
+    // (which CTest reports as a crash). The library chains to this handler.
+    std::signal(SIGABRT, [](int) {
+        std::fflush(stdout);
+        std::_Exit(98);
     });
 #ifdef _MSC_VER
     _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
