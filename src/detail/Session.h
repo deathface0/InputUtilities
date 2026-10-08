@@ -23,7 +23,7 @@ enum class SendMode {
 /// one SendInput call, tracks what is held down (from the INPUT events
 /// themselves, whoever built them) and releases it in reverse order.
 /// Thread-safe: sending and tracking happen under the same lock.
-class Session {
+class Session : public std::enable_shared_from_this<Session> {
 public:
     Session(std::shared_ptr<Backend> backend, std::uintptr_t extraInfoTag);
 
@@ -42,6 +42,9 @@ public:
 
     /// Number of keys and buttons currently held down.
     std::size_t heldCount() const;
+
+    /// Whether the key or button pressed by this event is currently held.
+    bool isHeld(const INPUT& event) const;
 
     /// Waits through the backend clock.
     Status wait(std::chrono::nanoseconds duration);

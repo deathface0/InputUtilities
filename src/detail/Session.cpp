@@ -66,6 +66,25 @@ std::size_t Session::heldCount() const {
     return held_.size();
 }
 
+bool Session::isHeld(const INPUT& event) const {
+    std::uint32_t id = 0;
+    if (event.type == INPUT_KEYBOARD) {
+        id = keyIdentity(event.ki);
+    } else if (event.type == INPUT_MOUSE) {
+        for (std::uint32_t i = 0; i < std::size(kMouseButtons); ++i) {
+            const MouseButtonFlags& button = kMouseButtons[i];
+            if (hasButton(event.mi, button.down, button.data) || hasButton(event.mi, button.up, button.data)) {
+                id = kMouse | i;
+                break;
+            }
+        }
+    }
+    if (id == 0) return false;
+
+    std::lock_guard lock(mutex_);
+    return std::any_of(held_.begin(), held_.end(), [id](const HeldInput& h) { return h.id == id; });
+}
+
 Status Session::wait(std::chrono::nanoseconds duration) {
     if (duration > std::chrono::nanoseconds::zero())
         backend_->sleepUntil(backend_->now() + std::chrono::duration_cast<Backend::Clock::duration>(duration));

@@ -27,8 +27,11 @@ else()
 endif()
 
 add_library(inpututil
+    src/Hold.cpp
+    src/Input.cpp
     src/InputUtilities.cpp
     src/InputUtilitiesCore.cpp
+    src/Keyboard.cpp
     src/KeyNames.cpp
     src/Status.cpp
     src/Win32Backend.cpp

@@ -6,10 +6,7 @@
 
 #include "TestSupport.h"
 
-#include <inpututil/Backend.h>
-#include <inpututil/Key.h>
-#include <inpututil/Point.h>
-#include <inpututil/Status.h>
+#include <inpututil/inpututil.h>
 
 using namespace inpututil;
 
@@ -21,6 +18,10 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     const Point point{1, 2};
     const Rect rect{0, 0, 10, 10};
     const Backend* backend = nullptr;
+    const Config config{.keyMode = KeyMode::ScanCode};
+    const Hold hold;
+    const Input* input = nullptr;
+    const Keyboard* keyboard = nullptr;
 
     CHECK(combo.keys.size() == 2);
     CHECK(key.valid());
@@ -28,4 +29,8 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     CHECK(status.ok());
     CHECK(rect.contains(point));
     CHECK(backend == nullptr);
+    CHECK(config.releaseOnDestroy);
+    CHECK_FALSE(hold.active());
+    CHECK(input == nullptr);
+    CHECK(keyboard == nullptr);
 }
