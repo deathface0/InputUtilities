@@ -22,6 +22,7 @@ add_executable(inpututil_tests
     test_key.cpp
     test_key_combo.cpp
     test_keyboard.cpp
+    test_text.cpp
     test_windows_names.cpp
 )
 target_include_directories(inpututil_tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})

@@ -37,6 +37,7 @@ add_library(inpututil
     src/Win32Backend.cpp
     src/detail/InputBuilders.cpp
     src/detail/Session.cpp
+    src/detail/Text.cpp
 )
 add_library(inpututil::inpututil ALIAS inpututil)
 

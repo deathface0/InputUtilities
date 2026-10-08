@@ -1,9 +1,12 @@
 #include "inpututil/Keyboard.h"
 
+#include <optional>
+#include <random>
 #include <vector>
 
 #include "detail/InputBuilders.h"
 #include "detail/Session.h"
+#include "detail/Text.h"
 
 namespace inpututil {
 
@@ -97,6 +100,56 @@ Hold Keyboard::hold(std::string_view combo) {
     const auto parsed = KeyCombo::parse(combo);
     if (!parsed) return Hold(nullptr, Error::InvalidArgument);
     return hold(*parsed);
+}
+
+Status Keyboard::type(std::string_view utf8, const TypeOptions& options) {
+    if (!session_) return Error::InvalidArgument;
+    const auto text = detail::utf8ToUtf16(utf8);
+    if (!text) return Error::InvalidArgument;
+    return type(std::wstring_view(*text), options);
+}
+
+Status Keyboard::type(std::u8string_view text, const TypeOptions& options) {
+    return type(std::string_view(reinterpret_cast<const char*>(text.data()), text.size()), options);
+}
+
+Status Keyboard::type(std::wstring_view text, const TypeOptions& options) {
+    if (!session_) return Error::InvalidArgument;
+
+    std::vector<detail::InputGroup> groups;
+    if (const Status status = detail::buildTextGroups(text, options.mode, options.fallbackToUnicode, mode_,
+                                                      session_->backend(), groups);
+        !status)
+        return status;
+
+    std::optional<std::mt19937> rng;
+    if (options.jitter > std::chrono::milliseconds::zero())
+        rng.emplace(options.seed != 0 ? options.seed : std::random_device{}());
+
+    for (std::size_t i = 0; i < groups.size(); ++i) {
+        if (i > 0) {
+            auto pause = options.delay;
+            if (rng) {
+                const auto jitter = options.jitter.count();
+                pause += std::chrono::milliseconds(std::uniform_int_distribution<long long>(-jitter, jitter)(*rng));
+            }
+            session_->wait(pause);
+        }
+
+        if (const Status status = session_->send(groups[i]); !status) {
+            // Release whatever this character pressed (its modifiers included).
+            std::vector<INPUT> ups;
+            for (const INPUT& event : groups[i]) {
+                if (event.ki.dwFlags & KEYEVENTF_KEYUP) continue;
+                INPUT up = event;
+                up.ki.dwFlags |= KEYEVENTF_KEYUP;
+                ups.insert(ups.begin(), up);
+            }
+            session_->send(ups, detail::SendMode::BestEffort);
+            return status;
+        }
+    }
+    return {};
 }
 
 bool Keyboard::isHeld(Key key) const {

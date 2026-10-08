@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <string_view>
 
 #include "inpututil/Hold.h"
@@ -12,6 +13,30 @@ namespace inpututil {
 namespace detail {
 class Session;
 }
+
+/// How Keyboard::type() produces the characters.
+enum class TextMode : std::uint8_t {
+    Unicode,    ///< KEYEVENTF_UNICODE: any character, independent of the keyboard layout.
+    Keystrokes, ///< The real keys of the active layout (with Shift/AltGr), for apps that ignore Unicode.
+};
+
+struct TypeOptions {
+    TextMode mode = TextMode::Unicode;
+
+    /// Pause between characters.
+    std::chrono::milliseconds delay{0};
+
+    /// Random variation added to each pause, uniform in [-jitter, +jitter]
+    /// (the pause never goes below zero).
+    std::chrono::milliseconds jitter{0};
+
+    /// Keystrokes mode: send characters without a key (and emoji) as Unicode.
+    /// When false, such a character fails the whole call with UnmappableCharacter.
+    bool fallbackToUnicode = true;
+
+    /// Seed of the jitter; 0 picks a random one, any other value is reproducible.
+    std::uint32_t seed = 0;
+};
 
 /// Keyboard of an Input. Keys are injected according to mode() (see KeyMode).
 ///
@@ -40,6 +65,13 @@ public:
     Hold hold(Key key);
     Hold hold(const KeyCombo& combo);
     Hold hold(std::string_view combo);
+
+    /// Types text, one character per batch. "\n", "\r\n" and "\r" press Enter,
+    /// "\t" presses Tab. Invalid text (bad UTF-8, unpaired surrogates) fails
+    /// with InvalidArgument before anything is sent.
+    Status type(std::string_view utf8, const TypeOptions& options = {});
+    Status type(std::wstring_view text, const TypeOptions& options = {});
+    Status type(std::u8string_view text, const TypeOptions& options = {});
 
     /// Whether this library currently holds the key down.
     bool isHeld(Key key) const;

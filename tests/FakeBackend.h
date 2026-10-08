@@ -92,6 +92,33 @@ public:
         vkToScan[VK_VOLUME_UP] = 0xE030;
     }
 
+    /// Characters of a US layout as VkKeyScanEx reports them on Windows 10
+    /// ('A' = 0x141 Shift+A, '_' = 0x1BD, '@' = 0x132; no key for 'ñ' or '€').
+    void loadUsLayout() {
+        loadUsScanCodes();
+        loadLettersAndDigits();
+        vkScan[L'!'] = 0x0131;
+        vkScan[L'@'] = 0x0132;
+        vkScan[L'-'] = 0x00BD;
+        vkScan[L'_'] = 0x01BD;
+    }
+
+    /// Characters of a Spanish layout: '@' and '€' need AltGr (Ctrl+Alt),
+    /// 'ñ' has its own key and 'á' is a dead-key composition (no single key).
+    void loadEsLayout() {
+        loadUsScanCodes();
+        loadLettersAndDigits();
+        vkToScan[VK_OEM_3] = 0x27;     // ñ
+        vkToScan[VK_OEM_MINUS] = 0x35; // - and _
+        vkScan[L'!'] = 0x0131;
+        vkScan[L'@'] = 0x0632;
+        vkScan[L'€'] = 0x0645;
+        vkScan[L'ñ'] = 0x00C0;
+        vkScan[L'Ñ'] = 0x01C0;
+        vkScan[L'-'] = 0x00BD;
+        vkScan[L'_'] = 0x01BD;
+    }
+
     /// Every accepted event, in order, across all batches.
     std::vector<INPUT> allSent() const {
         std::vector<INPUT> all;
@@ -142,4 +169,12 @@ public:
     }
 
     std::chrono::milliseconds doubleClickTime() override { return doubleClick; }
+
+private:
+    void loadLettersAndDigits() {
+        for (wchar_t c = L'a'; c <= L'z'; ++c) vkScan[c] = static_cast<std::int16_t>(c - L'a' + 'A');
+        for (wchar_t c = L'A'; c <= L'Z'; ++c) vkScan[c] = static_cast<std::int16_t>(0x0100 | c);
+        for (wchar_t c = L'0'; c <= L'9'; ++c) vkScan[c] = static_cast<std::int16_t>(c);
+        vkScan[L' '] = VK_SPACE;
+    }
 };
