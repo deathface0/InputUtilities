@@ -30,6 +30,7 @@ add_library(inpututil
     src/InputUtilities.cpp
     src/InputUtilitiesCore.cpp
     src/Status.cpp
+    src/Win32Backend.cpp
 )
 add_library(inpututil::inpututil ALIAS inpututil)
 

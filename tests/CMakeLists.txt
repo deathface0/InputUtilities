@@ -17,6 +17,7 @@ add_executable(inpututil_tests
     main.cpp
     test_smoke.cpp
     test_status.cpp
+    test_backend.cpp
 )
 target_include_directories(inpututil_tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(inpututil_tests PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
