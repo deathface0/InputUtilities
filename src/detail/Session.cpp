@@ -85,10 +85,14 @@ bool Session::isHeld(const INPUT& event) const {
     return std::any_of(held_.begin(), held_.end(), [id](const HeldInput& h) { return h.id == id; });
 }
 
-Status Session::wait(std::chrono::nanoseconds duration) {
-    if (duration > std::chrono::nanoseconds::zero())
-        backend_->sleepUntil(backend_->now() + std::chrono::duration_cast<Backend::Clock::duration>(duration));
+Status Session::waitUntil(Backend::Clock::time_point deadline) {
+    if (deadline > backend_->now()) backend_->sleepUntil(deadline);
     return {};
+}
+
+Status Session::wait(std::chrono::nanoseconds duration) {
+    if (duration <= std::chrono::nanoseconds::zero()) return {};
+    return waitUntil(backend_->now() + std::chrono::duration_cast<Backend::Clock::duration>(duration));
 }
 
 Status Session::sendLocked(std::span<const INPUT> inputs, SendMode mode) {

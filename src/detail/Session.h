@@ -46,7 +46,11 @@ public:
     /// Whether the key or button pressed by this event is currently held.
     bool isHeld(const INPUT& event) const;
 
-    /// Waits through the backend clock.
+    /// Waits until the deadline on the backend clock (returns at once if it passed).
+    /// The single waiting point of the library.
+    Status waitUntil(Backend::Clock::time_point deadline);
+
+    /// Waits for the duration on the backend clock.
     Status wait(std::chrono::nanoseconds duration);
 
 private:

@@ -6,5 +6,6 @@
 #include "inpututil/Input.h"
 #include "inpututil/Key.h"
 #include "inpututil/Keyboard.h"
+#include "inpututil/Motion.h"
 #include "inpututil/Point.h"
 #include "inpututil/Status.h"

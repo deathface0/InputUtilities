@@ -33,10 +33,12 @@ add_library(inpututil
     src/InputUtilitiesCore.cpp
     src/Keyboard.cpp
     src/KeyNames.cpp
+    src/Motion.cpp
     src/Status.cpp
     src/Win32Backend.cpp
     src/detail/Coords.cpp
     src/detail/InputBuilders.cpp
+    src/detail/Path.cpp
     src/detail/Session.cpp
     src/detail/Text.cpp
 )

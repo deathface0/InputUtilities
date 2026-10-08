@@ -23,6 +23,8 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     const Input* input = nullptr;
     const Keyboard* keyboard = nullptr;
     const TypeOptions options{.mode = TextMode::Keystrokes};
+    const Motion motion = Motion::human(std::chrono::milliseconds(300));
+    const Easing easing = Easing::Linear;
 
     CHECK(combo.keys.size() == 2);
     CHECK(key.valid());
@@ -35,4 +37,6 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     CHECK(input == nullptr);
     CHECK(keyboard == nullptr);
     CHECK(options.mode == TextMode::Keystrokes);
+    CHECK(motion.curved);
+    CHECK(easing == Easing::Linear);
 }

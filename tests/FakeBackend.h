@@ -19,6 +19,8 @@ public:
     std::vector<std::vector<INPUT>> batches;  // one entry per sendInput call (accepted events only)
     std::optional<std::size_t> acceptLimit;   // max events accepted per call
     std::uint32_t errorCode = 0;              // returned by lastError()
+    std::optional<std::size_t> rejectAfter;   // calls accepted before every later one is rejected
+    std::vector<Clock::time_point> batchTimes; // fake clock at each sendInput call
 
     // --- Screen and cursor --------------------------------------------------
     inpututil::Point cursor{0, 0}; // moved by the mouse events that get sent
@@ -41,6 +43,7 @@ public:
     // --- Time ---------------------------------------------------------------
     Clock::time_point clock{};
     std::vector<Clock::duration> sleeps;
+    Clock::duration sleepOvershoot{};         // how late every sleep wakes up
     std::chrono::milliseconds doubleClick{500};
 
     /// vk -> scan code table of a US keyboard exactly as MapVirtualKeyEx
@@ -132,7 +135,9 @@ public:
     }
 
     unsigned sendInput(std::span<const tagINPUT> inputs) override {
-        const std::size_t accepted = std::min(inputs.size(), acceptLimit.value_or(inputs.size()));
+        std::size_t accepted = std::min(inputs.size(), acceptLimit.value_or(inputs.size()));
+        if (rejectAfter && batchTimes.size() >= *rejectAfter) accepted = 0;
+        batchTimes.push_back(clock);
         batches.emplace_back(inputs.begin(), inputs.begin() + static_cast<std::ptrdiff_t>(accepted));
         for (std::size_t i = 0; i < accepted; ++i) applyMove(inputs[i]);
         return static_cast<unsigned>(accepted);
@@ -171,7 +176,7 @@ public:
 
     void sleepUntil(Clock::time_point deadline) override {
         sleeps.push_back(deadline > clock ? deadline - clock : Clock::duration::zero());
-        clock = std::max(clock, deadline);
+        if (deadline > clock) clock = deadline + sleepOvershoot;
     }
 
     std::chrono::milliseconds doubleClickTime() override { return doubleClick; }
