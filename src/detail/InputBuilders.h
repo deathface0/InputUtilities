@@ -7,6 +7,7 @@
 
 #include "inpututil/Backend.h"
 #include "inpututil/Key.h"
+#include "inpututil/Mouse.h"
 #include "inpututil/Point.h"
 
 // Builders that turn the public value types into Win32 INPUT events.
@@ -37,5 +38,8 @@ INPUT makeAbsoluteMove(Point target, const Rect& screen);
 
 /// Relative move in mickeys (subject to the user's pointer speed and acceleration).
 INPUT makeRelativeMove(int dx, int dy);
+
+/// Press or release of a mouse button.
+INPUT makeButtonInput(MouseButton button, bool up);
 
 } // namespace inpututil::detail

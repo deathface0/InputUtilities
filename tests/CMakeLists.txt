@@ -25,6 +25,7 @@ add_executable(inpututil_tests
     test_text.cpp
     test_coords.cpp
     test_motion.cpp
+    test_mouse.cpp
     test_windows_names.cpp
 )
 target_include_directories(inpututil_tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})

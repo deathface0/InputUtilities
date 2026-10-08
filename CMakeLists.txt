@@ -34,6 +34,7 @@ add_library(inpututil
     src/Keyboard.cpp
     src/KeyNames.cpp
     src/Motion.cpp
+    src/Mouse.cpp
     src/Status.cpp
     src/Win32Backend.cpp
     src/detail/Coords.cpp

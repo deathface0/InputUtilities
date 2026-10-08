@@ -36,6 +36,7 @@ public:
 
 private:
     friend class Keyboard;
+    friend class Mouse;
 
     Hold(std::function<Status()> release, Status status) noexcept;
 

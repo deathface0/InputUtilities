@@ -7,7 +7,8 @@ namespace inpututil {
 Input::Input(Config config)
     : session_(std::make_shared<detail::Session>(config.backend ? std::move(config.backend) : win32Backend(),
                                                  config.extraInfoTag)),
-      releaseOnDestroy_(config.releaseOnDestroy), keyboard(session_.get(), config.keyMode) {}
+      releaseOnDestroy_(config.releaseOnDestroy), keyboard(session_.get(), config.keyMode),
+      mouse(session_.get(), config.verifyCursor) {}
 
 Input::~Input() {
     if (session_ && releaseOnDestroy_) session_->releaseAll();
@@ -15,8 +16,9 @@ Input::~Input() {
 
 Input::Input(Input&& other) noexcept
     : session_(std::move(other.session_)), releaseOnDestroy_(other.releaseOnDestroy_),
-      keyboard(session_.get(), other.keyboard.mode_) {
+      keyboard(session_.get(), other.keyboard.mode_), mouse(session_.get(), other.mouse.verifyCursor_) {
     other.keyboard.session_ = nullptr;
+    other.mouse.session_ = nullptr;
 }
 
 Input& Input::operator=(Input&& other) noexcept {
@@ -26,7 +28,10 @@ Input& Input::operator=(Input&& other) noexcept {
         releaseOnDestroy_ = other.releaseOnDestroy_;
         keyboard.session_ = session_.get();
         keyboard.mode_ = other.keyboard.mode_;
+        mouse.session_ = session_.get();
+        mouse.verifyCursor_ = other.mouse.verifyCursor_;
         other.keyboard.session_ = nullptr;
+        other.mouse.session_ = nullptr;
     }
     return *this;
 }

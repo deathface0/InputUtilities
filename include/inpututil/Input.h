@@ -7,6 +7,7 @@
 #include "inpututil/Backend.h"
 #include "inpututil/Key.h"
 #include "inpututil/Keyboard.h"
+#include "inpututil/Mouse.h"
 #include "inpututil/Status.h"
 
 namespace inpututil {
@@ -25,6 +26,10 @@ struct Config {
 
     /// Release every key and button still held when the Input is destroyed.
     bool releaseOnDestroy = true;
+
+    /// After mouse.moveTo/moveBy, check that the cursor reached the target
+    /// (TargetNotReached otherwise).
+    bool verifyCursor = false;
 
     /// dwExtraInfo of the injected events.
     std::uintptr_t extraInfoTag = kDefaultExtraInfoTag;
@@ -57,6 +62,7 @@ public:
     Input& operator=(const Input&) = delete;
 
     Keyboard keyboard;
+    Mouse mouse;
 
     /// Releases every key and button currently held, last pressed first.
     Status releaseAll();

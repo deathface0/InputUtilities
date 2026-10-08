@@ -101,4 +101,20 @@ INPUT makeRelativeMove(int dx, int dy) {
     return input;
 }
 
+INPUT makeButtonInput(MouseButton button, bool up) {
+    INPUT input{};
+    input.type = INPUT_MOUSE;
+    switch (button) {
+    case MouseButton::Left: input.mi.dwFlags = up ? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_LEFTDOWN; break;
+    case MouseButton::Right: input.mi.dwFlags = up ? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_RIGHTDOWN; break;
+    case MouseButton::Middle: input.mi.dwFlags = up ? MOUSEEVENTF_MIDDLEUP : MOUSEEVENTF_MIDDLEDOWN; break;
+    case MouseButton::X1:
+    case MouseButton::X2:
+        input.mi.dwFlags = up ? MOUSEEVENTF_XUP : MOUSEEVENTF_XDOWN;
+        input.mi.mouseData = button == MouseButton::X1 ? XBUTTON1 : XBUTTON2;
+        break;
+    }
+    return input;
+}
+
 } // namespace inpututil::detail

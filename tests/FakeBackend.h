@@ -26,6 +26,7 @@ public:
     inpututil::Point cursor{0, 0}; // moved by the mouse events that get sent
     inpututil::Rect screen{0, 0, 1920, 1080};
     bool cursorAvailable = true;
+    bool moveCursor = true; // false: the cursor ignores moves (a target that is never reached)
 
     /// How absolute coordinates (0..65535) become pixels. Windows does not
     /// document it; these are the two models seen in practice.
@@ -189,7 +190,7 @@ private:
     }
 
     void applyMove(const INPUT& in) {
-        if (in.type != INPUT_MOUSE || !(in.mi.dwFlags & MOUSEEVENTF_MOVE)) return;
+        if (!moveCursor || in.type != INPUT_MOUSE || !(in.mi.dwFlags & MOUSEEVENTF_MOVE)) return;
         if (in.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) {
             cursor = {toPixel(in.mi.dx, screen.left, screen.width), toPixel(in.mi.dy, screen.top, screen.height)};
         } else {
