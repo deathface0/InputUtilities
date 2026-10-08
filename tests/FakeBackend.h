@@ -38,6 +38,60 @@ public:
     std::vector<Clock::duration> sleeps;
     std::chrono::milliseconds doubleClick{500};
 
+    /// vk -> scan code table of a US keyboard exactly as MapVirtualKeyEx
+    /// (MAPVK_VK_TO_VSC_EX) reports it on Windows 10, quirks included:
+    /// navigation keys come without the 0xE0 prefix, PrintScreen is 0x54 and
+    /// Pause is 0xE11D.
+    void loadUsScanCodes() {
+        const char* letters = "QWERTYUIOP";
+        for (int i = 0; i < 10; ++i) vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x10 + i);
+        letters = "ASDFGHJKL";
+        for (int i = 0; i < 9; ++i) vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x1E + i);
+        letters = "ZXCVBNM";
+        for (int i = 0; i < 7; ++i) vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x2C + i);
+        for (int i = 1; i <= 9; ++i) vkToScan[static_cast<std::uint16_t>('0' + i)] = static_cast<std::uint16_t>(0x01 + i);
+        vkToScan['0'] = 0x0B;
+        for (int i = 0; i < 10; ++i) vkToScan[static_cast<std::uint16_t>(VK_F1 + i)] = static_cast<std::uint16_t>(0x3B + i);
+        vkToScan[VK_F11] = 0x57;
+        vkToScan[VK_F12] = 0x58;
+
+        vkToScan[VK_ESCAPE] = 0x01;
+        vkToScan[VK_BACK] = 0x0E;
+        vkToScan[VK_TAB] = 0x0F;
+        vkToScan[VK_RETURN] = 0x1C;
+        vkToScan[VK_SPACE] = 0x39;
+        vkToScan[VK_CAPITAL] = 0x3A;
+        vkToScan[VK_OEM_MINUS] = 0x0C;
+
+        vkToScan[VK_SHIFT] = 0x2A;
+        vkToScan[VK_CONTROL] = 0x1D;
+        vkToScan[VK_MENU] = 0x38;
+        vkToScan[VK_LSHIFT] = 0x2A;
+        vkToScan[VK_RSHIFT] = 0x36;
+        vkToScan[VK_LCONTROL] = 0x1D;
+        vkToScan[VK_RCONTROL] = 0xE01D;
+        vkToScan[VK_LMENU] = 0x38;
+        vkToScan[VK_RMENU] = 0xE038;
+        vkToScan[VK_LWIN] = 0xE05B;
+        vkToScan[VK_APPS] = 0xE05D;
+
+        vkToScan[VK_LEFT] = 0x4B;
+        vkToScan[VK_UP] = 0x48;
+        vkToScan[VK_RIGHT] = 0x4D;
+        vkToScan[VK_DOWN] = 0x50;
+        vkToScan[VK_INSERT] = 0x52;
+        vkToScan[VK_DELETE] = 0x53;
+        vkToScan[VK_HOME] = 0x47;
+        vkToScan[VK_END] = 0x4F;
+        vkToScan[VK_PRIOR] = 0x49;
+        vkToScan[VK_NEXT] = 0x51;
+        vkToScan[VK_NUMLOCK] = 0x45;
+        vkToScan[VK_DIVIDE] = 0xE035;
+        vkToScan[VK_SNAPSHOT] = 0x54;
+        vkToScan[VK_PAUSE] = 0xE11D;
+        vkToScan[VK_VOLUME_UP] = 0xE030;
+    }
+
     /// Every accepted event, in order, across all batches.
     std::vector<INPUT> allSent() const {
         std::vector<INPUT> all;
