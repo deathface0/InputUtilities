@@ -67,3 +67,8 @@ if(INPUTUTIL_INSTALL)
         ${CMAKE_CURRENT_BINARY_DIR}/inpututilConfigVersion.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/inpututil)
 endif()
+
+if(INPUTUTIL_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

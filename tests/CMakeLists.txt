@@ -1,0 +1,24 @@
+include(FetchContent)
+
+# doctest is header-only: download just doctest.h for the pinned release and
+# verify its hash, instead of cloning the whole repository (whose examples
+# exceed MAX_PATH when the build directory is deep).
+FetchContent_Declare(doctest
+    URL https://raw.githubusercontent.com/doctest/doctest/v2.4.11/doctest/doctest.h
+    URL_HASH SHA256=44faa038e9c3f9728efbda143748d01124ea0a27f4bf78f35a15d8fab2e039fb
+    DOWNLOAD_NO_EXTRACT TRUE
+    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/doctest/doctest)
+FetchContent_MakeAvailable(doctest)
+
+add_library(inpututil_doctest INTERFACE)
+target_include_directories(inpututil_doctest SYSTEM INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/_deps/doctest)
+
+add_executable(inpututil_tests
+    main.cpp
+    test_smoke.cpp
+)
+target_include_directories(inpututil_tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(inpututil_tests PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
+target_link_libraries(inpututil_tests PRIVATE inpututil::inpututil inpututil_doctest inpututil_warnings)
+
+add_test(NAME inpututil_tests COMMAND inpututil_tests)
