@@ -36,13 +36,13 @@ struct Config {
 
     /// Key that stops long operations (motions, holds, typing, timed clicks,
     /// sequence waits): they release everything and return Error::Aborted.
-    std::optional<Key> abortKey;
+    std::optional<Key> abortKey{};
 
     /// dwExtraInfo of the injected events.
     std::uintptr_t extraInfoTag = kDefaultExtraInfoTag;
 
     /// System access; nullptr means win32Backend().
-    std::shared_ptr<Backend> backend;
+    std::shared_ptr<Backend> backend{};
 };
 
 /// Entry point of the library. Tracks everything it presses so it can always
