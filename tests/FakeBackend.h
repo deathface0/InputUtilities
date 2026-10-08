@@ -39,6 +39,7 @@ public:
 
     // --- Key state ----------------------------------------------------------
     std::set<std::uint16_t> keysDown;
+    std::map<std::uint16_t, Clock::time_point> pressedFrom; // key counts as down from that fake time on
     std::set<std::uint16_t> toggled;
 
     // --- Time ---------------------------------------------------------------
@@ -169,7 +170,11 @@ public:
         return 0;
     }
 
-    bool isKeyDown(std::uint16_t vk) override { return keysDown.contains(vk); }
+    bool isKeyDown(std::uint16_t vk) override {
+        if (keysDown.contains(vk)) return true;
+        const auto it = pressedFrom.find(vk);
+        return it != pressedFrom.end() && clock >= it->second;
+    }
 
     bool isKeyToggled(std::uint16_t vk) override { return toggled.contains(vk); }
 

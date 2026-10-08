@@ -8,7 +8,9 @@ Input::Input(Config config)
     : session_(std::make_shared<detail::Session>(config.backend ? std::move(config.backend) : win32Backend(),
                                                  config.extraInfoTag)),
       releaseOnDestroy_(config.releaseOnDestroy), keyboard(session_.get(), config.keyMode),
-      mouse(session_.get(), config.verifyCursor) {}
+      mouse(session_.get(), config.verifyCursor) {
+    setAbortKey(config.abortKey);
+}
 
 Input::~Input() {
     if (session_ && releaseOnDestroy_) session_->releaseAll();
@@ -48,5 +50,17 @@ Status Input::sendRaw(std::span<const tagINPUT> events) {
 }
 
 std::size_t Input::heldCount() const { return session_ ? session_->heldCount() : 0; }
+
+void Input::setAbortKey(std::optional<Key> key) {
+    if (!session_) return;
+    std::uint16_t vk = 0;
+    if (key && key->isScanCode()) {
+        const auto scan = static_cast<std::uint16_t>(key->scanCode() | (key->extended() ? 0xE000 : 0));
+        vk = session_->backend().scanCodeToVk(scan);
+    } else if (key) {
+        vk = key->vk();
+    }
+    session_->setAbortVk(vk);
+}
 
 } // namespace inpututil

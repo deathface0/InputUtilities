@@ -85,13 +85,31 @@ bool Session::isHeld(const INPUT& event) const {
     return std::any_of(held_.begin(), held_.end(), [id](const HeldInput& h) { return h.id == id; });
 }
 
+Status Session::checkAbort() {
+    const std::uint16_t vk = abortVk_.load();
+    if (vk == 0 || !backend_->isKeyDown(vk)) return {};
+    releaseAll();
+    return Error::Aborted;
+}
+
 Status Session::waitUntil(Backend::Clock::time_point deadline) {
-    if (deadline > backend_->now()) backend_->sleepUntil(deadline);
-    return {};
+    if (deadline <= backend_->now()) return {};
+    if (abortVk_.load() == 0) {
+        backend_->sleepUntil(deadline);
+        return {};
+    }
+
+    constexpr auto kPollInterval = std::chrono::milliseconds(10);
+    while (true) {
+        if (const Status status = checkAbort(); !status) return status;
+        const auto now = backend_->now();
+        if (now >= deadline) return {};
+        backend_->sleepUntil(std::min<Backend::Clock::time_point>(deadline, now + kPollInterval));
+    }
 }
 
 Status Session::wait(std::chrono::nanoseconds duration) {
-    if (duration <= std::chrono::nanoseconds::zero()) return {};
+    if (duration <= std::chrono::nanoseconds::zero()) return checkAbort();
     return waitUntil(backend_->now() + std::chrono::duration_cast<Backend::Clock::duration>(duration));
 }
 

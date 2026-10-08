@@ -28,6 +28,7 @@ add_executable(inpututil_tests
     test_mouse.cpp
     test_mouse_actions.cpp
     test_sequence.cpp
+    test_abort.cpp
     test_windows_names.cpp
 )
 target_include_directories(inpututil_tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})

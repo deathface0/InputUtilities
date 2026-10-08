@@ -120,7 +120,8 @@ Status Mouse::click(MouseButton button, const ClickOptions& options) {
     }
 
     for (int i = 0; i < options.count; ++i) {
-        if (i > 0) session_->wait(options.interval);
+        if (i > 0)
+            if (const Status status = session_->wait(options.interval); !status) return status;
 
         if (options.hold <= zero) {
             const INPUT clickEvents[] = {down, up};
@@ -135,7 +136,7 @@ Status Mouse::click(MouseButton button, const ClickOptions& options) {
             session_->send(std::span(&up, 1), detail::SendMode::BestEffort);
             return status;
         }
-        session_->wait(options.hold);
+        if (const Status status = session_->wait(options.hold); !status) return status; // aborted: released
         if (const Status status = session_->send(std::span(&up, 1), detail::SendMode::BestEffort); !status)
             return status;
     }

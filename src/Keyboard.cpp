@@ -67,7 +67,7 @@ Status Keyboard::press(const KeyCombo& combo, std::chrono::milliseconds hold) {
         session_->send(events->ups, detail::SendMode::BestEffort);
         return status;
     }
-    session_->wait(hold);
+    if (const Status status = session_->wait(hold); !status) return status; // aborted: already released
     return session_->send(events->ups, detail::SendMode::BestEffort);
 }
 
@@ -127,14 +127,16 @@ Status Keyboard::type(std::wstring_view text, const TypeOptions& options) {
         rng.emplace(options.seed != 0 ? options.seed : std::random_device{}());
 
     for (std::size_t i = 0; i < groups.size(); ++i) {
+        // The first character only checks the abort key; the others wait delay ± jitter first.
+        auto pause = std::chrono::milliseconds::zero();
         if (i > 0) {
-            auto pause = options.delay;
+            pause = options.delay;
             if (rng) {
                 const auto jitter = options.jitter.count();
                 pause += std::chrono::milliseconds(std::uniform_int_distribution<long long>(-jitter, jitter)(*rng));
             }
-            session_->wait(pause);
         }
+        if (const Status status = session_->wait(pause); !status) return status;
 
         if (const Status status = session_->send(groups[i]); !status) {
             // Release whatever this character pressed (its modifiers included).

@@ -54,6 +54,10 @@ Status Input::play(const Sequence& sequence) {
     for (const auto& step : sequence.steps_)
         if (const Status status = validate(step, mode, backend); !status) return status;
 
+    // A held abort key stops the sequence before it starts.
+    if (!sequence.empty())
+        if (const Status status = session_->checkAbort(); !status) return status;
+
     std::vector<INPUT> pending;                    // instant events waiting to go in one batch
     std::vector<std::pair<INPUT, INPUT>> pressed; // (press, release) of everything this sequence pressed
 

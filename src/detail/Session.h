@@ -2,6 +2,7 @@
 
 #include <windows.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -46,11 +47,19 @@ public:
     /// Whether the key or button pressed by this event is currently held.
     bool isHeld(const INPUT& event) const;
 
-    /// Waits until the deadline on the backend clock (returns at once if it passed).
-    /// The single waiting point of the library.
+    /// Virtual key that aborts long operations (0 = none). Safe to call from any thread.
+    void setAbortVk(std::uint16_t vk) noexcept { abortVk_.store(vk); }
+
+    /// If the abort key is down: releases everything and returns Aborted.
+    Status checkAbort();
+
+    /// Waits until the deadline on the backend clock (returns at once if it
+    /// passed). The single waiting point of the library: with an abort key it
+    /// polls the key every 10 ms and returns Aborted when it goes down.
     Status waitUntil(Backend::Clock::time_point deadline);
 
-    /// Waits for the duration on the backend clock.
+    /// Waits for the duration on the backend clock. A zero duration still
+    /// checks the abort key.
     Status wait(std::chrono::nanoseconds duration);
 
 private:
@@ -66,6 +75,8 @@ private:
 
     std::shared_ptr<Backend> backend_;
     std::uintptr_t extraInfoTag_;
+
+    std::atomic<std::uint16_t> abortVk_{0};
 
     mutable std::timed_mutex mutex_;
     std::vector<HeldInput> held_; // in press order
