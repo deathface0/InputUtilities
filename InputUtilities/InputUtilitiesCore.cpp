@@ -1,4 +1,4 @@
-﻿#include "InputUtilitiesCore.h"
+#include "InputUtilitiesCore.h"
 
 InputUtilitiesCore::InputUtilitiesCore(bool safemode)
     : safemode(safemode)
