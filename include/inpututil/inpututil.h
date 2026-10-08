@@ -2,6 +2,7 @@
 
 // Umbrella header: everything a user of the library needs.
 #include "inpututil/Backend.h"
+#include "inpututil/EmergencyRelease.h"
 #include "inpututil/Hold.h"
 #include "inpututil/Input.h"
 #include "inpututil/Key.h"

@@ -29,6 +29,7 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     const Mouse* mouse = nullptr;
     const ClickOptions click{.count = 2};
     const Sequence sequence;
+    void (*const install)() = &installEmergencyRelease;
 
     CHECK(combo.keys.size() == 2);
     CHECK(key.valid());
@@ -47,4 +48,5 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     CHECK(mouse == nullptr);
     CHECK(click.count == 2);
     CHECK(sequence.empty());
+    CHECK(install != nullptr);
 }

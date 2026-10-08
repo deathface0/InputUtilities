@@ -27,6 +27,7 @@ enum class SendMode {
 class Session : public std::enable_shared_from_this<Session> {
 public:
     Session(std::shared_ptr<Backend> backend, std::uintptr_t extraInfoTag);
+    ~Session();
 
     Session(const Session&) = delete;
     Session& operator=(const Session&) = delete;
@@ -40,6 +41,11 @@ public:
     /// Releases every held key and button, last pressed first. Whatever could
     /// not be released stays tracked so a later call can retry it.
     Status releaseAll();
+
+    /// releaseAll() for a dying process: never throws and never blocks for
+    /// long. If the lock cannot be taken (the crash happened while sending),
+    /// the releases are sent anyway without touching the tracking.
+    void emergencyRelease() noexcept;
 
     /// Number of keys and buttons currently held down.
     std::size_t heldCount() const;
@@ -69,6 +75,7 @@ private:
     };
 
     Status sendLocked(std::span<const INPUT> inputs, SendMode mode);
+    std::vector<INPUT> releasesLocked() const; // release events, last pressed first
     void track(const INPUT& input);
     void hold(std::uint32_t id, const INPUT& release);
     void unhold(std::uint32_t id);
@@ -81,5 +88,10 @@ private:
     mutable std::timed_mutex mutex_;
     std::vector<HeldInput> held_; // in press order
 };
+
+/// Process-wide list of live sessions, used by the emergency release
+/// (defined in EmergencyRelease.cpp).
+void registerSession(Session* session);
+void unregisterSession(Session* session);
 
 } // namespace inpututil::detail

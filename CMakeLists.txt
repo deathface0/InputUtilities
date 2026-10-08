@@ -27,6 +27,7 @@ else()
 endif()
 
 add_library(inpututil
+    src/EmergencyRelease.cpp
     src/Hold.cpp
     src/Input.cpp
     src/InputUtilities.cpp

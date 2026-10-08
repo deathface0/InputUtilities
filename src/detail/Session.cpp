@@ -43,7 +43,11 @@ std::uint32_t keyIdentity(const KEYBDINPUT& ki) {
 } // namespace
 
 Session::Session(std::shared_ptr<Backend> backend, std::uintptr_t extraInfoTag)
-    : backend_(std::move(backend)), extraInfoTag_(extraInfoTag) {}
+    : backend_(std::move(backend)), extraInfoTag_(extraInfoTag) {
+    registerSession(this);
+}
+
+Session::~Session() { unregisterSession(this); }
 
 Status Session::send(std::span<const INPUT> inputs, SendMode mode) {
     std::lock_guard lock(mutex_);
@@ -53,12 +57,30 @@ Status Session::send(std::span<const INPUT> inputs, SendMode mode) {
 Status Session::releaseAll() {
     std::lock_guard lock(mutex_);
     if (held_.empty()) return {};
+    return sendLocked(releasesLocked(), SendMode::BestEffort);
+}
 
+void Session::emergencyRelease() noexcept {
+    try {
+        std::unique_lock lock(mutex_, std::defer_lock);
+        if (lock.try_lock_for(std::chrono::milliseconds(50))) {
+            if (!held_.empty()) sendLocked(releasesLocked(), SendMode::BestEffort);
+            return;
+        }
+        // The lock is stuck (the crash happened while sending): send the
+        // releases anyway, the process is going away.
+        const std::vector<INPUT> releases = releasesLocked();
+        if (!releases.empty()) backend_->sendInput(releases);
+    } catch (...) {
+        // Nothing else can be done while the process dies.
+    }
+}
+
+std::vector<INPUT> Session::releasesLocked() const {
     std::vector<INPUT> releases;
     releases.reserve(held_.size());
     for (auto it = held_.rbegin(); it != held_.rend(); ++it) releases.push_back(it->release);
-
-    return sendLocked(releases, SendMode::BestEffort);
+    return releases;
 }
 
 std::size_t Session::heldCount() const {
