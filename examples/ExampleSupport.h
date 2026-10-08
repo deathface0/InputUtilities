@@ -20,7 +20,7 @@ inline void enableDpiAwareness() {
     using SetContext = BOOL(WINAPI*)(HANDLE);
     if (const HMODULE user32 = GetModuleHandleW(L"user32.dll")) {
         if (const auto set = reinterpret_cast<SetContext>(
-                reinterpret_cast<void*>(GetProcAddress(user32, "SetProcessDpiAwarenessContext")))) {
+                reinterpret_cast<void (*)()>(GetProcAddress(user32, "SetProcessDpiAwarenessContext")))) {
             set(reinterpret_cast<HANDLE>(-4)); // DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
         }
     }

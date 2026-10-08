@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  msvc:
+    name: MSVC ${{ matrix.config }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [debug, release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up the MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure
+        run: cmake --preset msvc-ninja -DINPUTUTIL_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build --preset msvc-ninja-${{ matrix.config }}
+
+      - name: Test
+        run: ctest --preset msvc-ninja-${{ matrix.config }}
+
+  mingw:
+    name: MinGW-w64 GCC
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2 (UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+
+      - name: Configure
+        run: cmake --preset mingw -DINPUTUTIL_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build --preset mingw
+
+      - name: Test
+        run: ctest --preset mingw

@@ -37,7 +37,8 @@ void silenceCrashReporting() {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     SetUnhandledExceptionFilter([](EXCEPTION_POINTERS*) -> LONG {
         std::fflush(stdout);
-        ExitProcess(99);
+        TerminateProcess(GetCurrentProcess(), 99);
+        return EXCEPTION_EXECUTE_HANDLER;
     });
 #ifdef _MSC_VER
     _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);

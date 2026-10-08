@@ -10,6 +10,16 @@
       "binaryDir": "${sourceDir}/build/msvc"
     },
     {
+      "name": "msvc-ninja",
+      "displayName": "MSVC x64 (Ninja, any Visual Studio version; run from a developer prompt)",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/msvc-ninja",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
       "name": "mingw",
       "displayName": "MinGW-w64 (Ninja)",
       "generator": "Ninja",
@@ -23,6 +33,8 @@
   "buildPresets": [
     { "name": "msvc-debug", "configurePreset": "msvc", "configuration": "Debug" },
     { "name": "msvc-release", "configurePreset": "msvc", "configuration": "Release" },
+    { "name": "msvc-ninja-debug", "configurePreset": "msvc-ninja", "configuration": "Debug" },
+    { "name": "msvc-ninja-release", "configurePreset": "msvc-ninja", "configuration": "Release" },
     { "name": "mingw", "configurePreset": "mingw" }
   ],
   "testPresets": [
@@ -35,6 +47,18 @@
     {
       "name": "msvc-release",
       "configurePreset": "msvc",
+      "configuration": "Release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "msvc-ninja-debug",
+      "configurePreset": "msvc-ninja",
+      "configuration": "Debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "msvc-ninja-release",
+      "configurePreset": "msvc-ninja",
       "configuration": "Release",
       "output": { "outputOnFailure": true }
     },
