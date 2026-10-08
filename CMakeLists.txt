@@ -35,6 +35,8 @@ add_library(inpututil
     src/KeyNames.cpp
     src/Motion.cpp
     src/Mouse.cpp
+    src/Play.cpp
+    src/Sequence.cpp
     src/Status.cpp
     src/Win32Backend.cpp
     src/detail/Coords.cpp

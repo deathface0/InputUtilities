@@ -45,4 +45,7 @@ INPUT makeButtonInput(MouseButton button, bool up);
 /// Wheel rotation; positive is up (vertical) or right (horizontal), 120 per notch.
 INPUT makeWheelInput(int delta, bool horizontal);
 
+/// Wheel delta for a number of notches (120 each, rounded); nullopt if not finite.
+std::optional<int> wheelDelta(double notches);
+
 } // namespace inpututil::detail

@@ -170,10 +170,9 @@ Status Mouse::scrollHorizontal(double notches, std::chrono::milliseconds duratio
 
 Status Mouse::scrollAxis(double notches, std::chrono::milliseconds duration, bool horizontal) {
     if (!session_) return Error::InvalidArgument;
-    if (!std::isfinite(notches)) return Error::InvalidArgument;
-
-    constexpr double kLimit = 1e6; // notches; keeps the delta inside an int
-    const auto total = static_cast<int>(std::llround(std::clamp(notches, -kLimit, kLimit) * WHEEL_DELTA));
+    const auto delta = detail::wheelDelta(notches);
+    if (!delta) return Error::InvalidArgument;
+    const int total = *delta;
     if (total == 0) return {};
 
     if (duration <= std::chrono::milliseconds::zero()) {

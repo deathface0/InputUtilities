@@ -9,4 +9,5 @@
 #include "inpututil/Motion.h"
 #include "inpututil/Mouse.h"
 #include "inpututil/Point.h"
+#include "inpututil/Sequence.h"
 #include "inpututil/Status.h"

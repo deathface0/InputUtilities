@@ -41,6 +41,12 @@ Status Input::releaseAll() {
     return session_->releaseAll();
 }
 
+Status Input::sendRaw(std::span<const tagINPUT> events) {
+    if (!session_) return Error::InvalidArgument;
+    if (events.empty()) return {};
+    return session_->send(events);
+}
+
 std::size_t Input::heldCount() const { return session_ ? session_->heldCount() : 0; }
 
 } // namespace inpututil

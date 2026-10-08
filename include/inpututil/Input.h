@@ -3,11 +3,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
 
 #include "inpututil/Backend.h"
 #include "inpututil/Key.h"
 #include "inpututil/Keyboard.h"
 #include "inpututil/Mouse.h"
+#include "inpututil/Sequence.h"
 #include "inpututil/Status.h"
 
 namespace inpututil {
@@ -66,6 +68,16 @@ public:
 
     /// Releases every key and button currently held, last pressed first.
     Status releaseAll();
+
+    /// Plays a Sequence. Every step is validated first: a bad step fails the
+    /// call before anything is sent. If a step fails midway, whatever the
+    /// sequence pressed is released and the error is returned.
+    Status play(const Sequence& sequence);
+
+    /// Sends raw Win32 INPUT events (include <windows.h> to build them) in one
+    /// batch. Keys and buttons pressed this way are tracked like any other, so
+    /// releaseAll() and the destructor release them too.
+    Status sendRaw(std::span<const tagINPUT> events);
 
     /// Number of keys and buttons currently held.
     std::size_t heldCount() const;

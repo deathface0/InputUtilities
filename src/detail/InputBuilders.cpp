@@ -2,6 +2,9 @@
 
 #include "detail/Coords.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace inpututil::detail {
 
 bool isExtendedVk(std::uint16_t vk) {
@@ -123,6 +126,12 @@ INPUT makeWheelInput(int delta, bool horizontal) {
     input.mi.dwFlags = horizontal ? MOUSEEVENTF_HWHEEL : MOUSEEVENTF_WHEEL;
     input.mi.mouseData = static_cast<DWORD>(delta);
     return input;
+}
+
+std::optional<int> wheelDelta(double notches) {
+    if (!std::isfinite(notches)) return std::nullopt;
+    constexpr double kLimit = 1e6; // notches; keeps the delta inside an int
+    return static_cast<int>(std::llround(std::clamp(notches, -kLimit, kLimit) * WHEEL_DELTA));
 }
 
 } // namespace inpututil::detail
