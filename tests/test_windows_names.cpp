@@ -27,6 +27,7 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     const Easing easing = Easing::Linear;
     const MouseButton button = MouseButton::X1;
     const Mouse* mouse = nullptr;
+    const ClickOptions click{.count = 2};
 
     CHECK(combo.keys.size() == 2);
     CHECK(key.valid());
@@ -43,4 +44,5 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     CHECK(easing == Easing::Linear);
     CHECK(button == MouseButton::X1);
     CHECK(mouse == nullptr);
+    CHECK(click.count == 2);
 }

@@ -117,4 +117,12 @@ INPUT makeButtonInput(MouseButton button, bool up) {
     return input;
 }
 
+INPUT makeWheelInput(int delta, bool horizontal) {
+    INPUT input{};
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = horizontal ? MOUSEEVENTF_HWHEEL : MOUSEEVENTF_WHEEL;
+    input.mi.mouseData = static_cast<DWORD>(delta);
+    return input;
+}
+
 } // namespace inpututil::detail

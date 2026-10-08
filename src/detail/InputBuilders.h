@@ -42,4 +42,7 @@ INPUT makeRelativeMove(int dx, int dy);
 /// Press or release of a mouse button.
 INPUT makeButtonInput(MouseButton button, bool up);
 
+/// Wheel rotation; positive is up (vertical) or right (horizontal), 120 per notch.
+INPUT makeWheelInput(int delta, bool horizontal);
+
 } // namespace inpututil::detail

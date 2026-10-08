@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <optional>
 
@@ -15,6 +16,17 @@ class Session;
 }
 
 enum class MouseButton : std::uint8_t { Left, Right, Middle, X1, X2 };
+
+struct ClickOptions {
+    /// Number of clicks (2 = double click, 3 = triple click...).
+    int count = 1;
+
+    /// How long each click keeps the button down.
+    std::chrono::milliseconds hold{0};
+
+    /// Pause between two clicks.
+    std::chrono::milliseconds interval{0};
+};
 
 /// Mouse of an Input. Positions are pixels of the virtual desktop (all
 /// monitors; coordinates left of or above the primary monitor are negative).
@@ -48,6 +60,27 @@ public:
     /// Presses the button and returns a Hold that releases it.
     Hold hold(MouseButton button = MouseButton::Left);
 
+    /// Clicks the button. Without hold or interval, all the clicks go in a
+    /// single batch. If the system rejects part of it, the button is still released.
+    Status click(MouseButton button = MouseButton::Left, const ClickOptions& options = {});
+
+    /// Two clicks Windows recognizes as a double click. An `interval` equal to
+    /// or longer than the system double-click time fails with InvalidArgument.
+    Status doubleClick(MouseButton button = MouseButton::Left, std::chrono::milliseconds interval = {});
+
+    /// Moves to `from`, presses the button, moves to `to` with `motion` and
+    /// always releases the button, even if the movement failed.
+    Status drag(Point from, Point to, const Motion& motion = Motion::smooth(std::chrono::milliseconds(300)),
+                MouseButton button = MouseButton::Left);
+
+    /// Wheel notches: positive scrolls up (away from the user), negative down.
+    /// Fractions are supported (high-resolution wheels). With a duration the
+    /// notches are spread evenly over that time.
+    Status scroll(double notches, std::chrono::milliseconds duration = {});
+
+    /// Horizontal wheel notches: positive scrolls right, negative left.
+    Status scrollHorizontal(double notches, std::chrono::milliseconds duration = {});
+
     /// Whether this library currently holds the button down.
     bool isHeld(MouseButton button) const;
 
@@ -57,6 +90,7 @@ private:
     Mouse(detail::Session* session, bool verifyCursor) noexcept : session_(session), verifyCursor_(verifyCursor) {}
 
     Status moveAbsolute(Point from, Point target, const Motion& motion);
+    Status scrollAxis(double notches, std::chrono::milliseconds duration, bool horizontal);
 
     detail::Session* session_; // owned by Input; null after the Input was moved from
     bool verifyCursor_;
