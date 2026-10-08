@@ -33,10 +33,9 @@ InputGroup unicodeGroup(std::wstring_view units) {
 }
 
 std::optional<InputGroup> keyTapGroup(Key key, KeyMode mode, Backend& backend) {
-    const auto down = makeKeyInput(key, mode, false, backend);
-    const auto up = makeKeyInput(key, mode, true, backend);
-    if (!down || !up) return std::nullopt;
-    return InputGroup{*down, *up};
+    const auto events = makeComboEvents(std::span(&key, 1), mode, backend);
+    if (!events) return std::nullopt;
+    return events->tap();
 }
 
 // The real keys of the active layout for a BMP character, wrapped in the
@@ -63,17 +62,9 @@ std::optional<InputGroup> keystrokeGroup(wchar_t ch, KeyMode mode, Backend& back
     }
     keys.push_back(Key::fromVk(vk));
 
-    InputGroup downs;
-    InputGroup ups;
-    for (const Key& key : keys) {
-        const auto down = makeKeyInput(key, mode, false, backend);
-        const auto up = makeKeyInput(key, mode, true, backend);
-        if (!down || !up) return std::nullopt;
-        downs.push_back(*down);
-        ups.insert(ups.begin(), *up);
-    }
-    downs.insert(downs.end(), ups.begin(), ups.end());
-    return downs;
+    const auto events = makeComboEvents(keys, mode, backend);
+    if (!events) return std::nullopt;
+    return events->tap();
 }
 
 } // namespace

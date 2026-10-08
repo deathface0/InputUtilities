@@ -4,6 +4,8 @@
 
 #include <cstdint>
 #include <optional>
+#include <span>
+#include <vector>
 
 #include "inpututil/Backend.h"
 #include "inpututil/Key.h"
@@ -31,6 +33,18 @@ std::optional<ResolvedKey> resolveKey(const Key& key, Backend& backend);
 /// Key event for the given mode, falling back to the other mode when the key
 /// cannot be expressed in the requested one. nullopt for an invalid key.
 std::optional<INPUT> makeKeyInput(const Key& key, KeyMode mode, bool up, Backend& backend);
+
+/// Events that press keys together: pressed in order, released in reverse.
+struct ComboEvents {
+    std::vector<INPUT> downs; ///< in press order
+    std::vector<INPUT> ups;   ///< in reverse order
+
+    /// Press and release in one sequence: downs followed by ups.
+    std::vector<INPUT> tap() const;
+};
+
+/// Events for the keys; nullopt if the list is empty or any key is invalid.
+std::optional<ComboEvents> makeComboEvents(std::span<const Key> keys, KeyMode mode, Backend& backend);
 
 /// Absolute move to a pixel of the virtual desktop (clamped to it):
 /// MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK.

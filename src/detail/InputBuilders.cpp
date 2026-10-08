@@ -85,6 +85,26 @@ std::optional<INPUT> makeKeyInput(const Key& key, KeyMode mode, bool up, Backend
     return input;
 }
 
+std::vector<INPUT> ComboEvents::tap() const {
+    std::vector<INPUT> events = downs;
+    events.insert(events.end(), ups.begin(), ups.end());
+    return events;
+}
+
+std::optional<ComboEvents> makeComboEvents(std::span<const Key> keys, KeyMode mode, Backend& backend) {
+    if (keys.empty()) return std::nullopt;
+
+    ComboEvents events;
+    for (const Key& key : keys) {
+        const auto down = makeKeyInput(key, mode, false, backend);
+        const auto up = makeKeyInput(key, mode, true, backend);
+        if (!down || !up) return std::nullopt;
+        events.downs.push_back(*down);
+        events.ups.insert(events.ups.begin(), *up);
+    }
+    return events;
+}
+
 INPUT makeAbsoluteMove(Point target, const Rect& screen) {
     const Point p = clampToScreen(target, screen);
     INPUT input{};
