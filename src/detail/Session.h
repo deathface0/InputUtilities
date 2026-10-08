@@ -5,6 +5,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <span>
@@ -77,8 +78,8 @@ private:
     Status sendLocked(std::span<const INPUT> inputs, SendMode mode);
     std::vector<INPUT> releasesLocked() const; // release events, last pressed first
     void track(const INPUT& input);
-    void hold(std::uint32_t id, const INPUT& release);
-    void unhold(std::uint32_t id);
+    void markHeld(std::uint32_t id, const INPUT& release);
+    void markReleased(std::uint32_t id);
 
     std::shared_ptr<Backend> backend_;
     std::uintptr_t extraInfoTag_;
@@ -88,6 +89,10 @@ private:
     mutable std::timed_mutex mutex_;
     std::vector<HeldInput> held_; // in press order
 };
+
+/// Callback for a Hold: sends the releases (best effort) if the session is
+/// still alive; otherwise succeeds, as the session released everything when it died.
+std::function<Status()> makeReleaser(Session& session, std::vector<INPUT> releases);
 
 /// Process-wide list of live sessions, used by the emergency release
 /// (defined in EmergencyRelease.cpp).

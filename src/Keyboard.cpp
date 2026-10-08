@@ -89,11 +89,7 @@ Hold Keyboard::hold(const KeyCombo& combo) {
         return Hold(nullptr, status);
     }
 
-    auto release = [session = session_->weak_from_this(), ups = std::move(events->ups)]() -> Status {
-        if (const auto alive = session.lock()) return alive->send(ups, detail::SendMode::BestEffort);
-        return {}; // the Input is gone and already released everything
-    };
-    return Hold(std::move(release), Status{});
+    return Hold(detail::makeReleaser(*session_, std::move(events->ups)), Status{});
 }
 
 Hold Keyboard::hold(std::string_view combo) {

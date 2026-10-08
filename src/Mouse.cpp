@@ -91,12 +91,7 @@ Status Mouse::up(MouseButton button) {
 
 Hold Mouse::hold(MouseButton button) {
     if (const Status status = down(button); !status) return Hold(nullptr, status);
-
-    auto release = [session = session_->weak_from_this(), up = detail::makeButtonInput(button, true)]() -> Status {
-        if (const auto alive = session.lock()) return alive->send(std::span(&up, 1), detail::SendMode::BestEffort);
-        return {}; // the Input is gone and already released everything
-    };
-    return Hold(std::move(release), Status{});
+    return Hold(detail::makeReleaser(*session_, {detail::makeButtonInput(button, true)}), Status{});
 }
 
 Status Mouse::click(MouseButton button, const ClickOptions& options) {

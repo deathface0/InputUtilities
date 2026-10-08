@@ -167,12 +167,12 @@ void Session::track(const INPUT& input) {
     if (input.type == INPUT_KEYBOARD) {
         const std::uint32_t id = keyIdentity(input.ki);
         if (input.ki.dwFlags & KEYEVENTF_KEYUP) {
-            unhold(id);
+            markReleased(id);
         } else {
             INPUT release = input;
             release.ki.dwFlags |= KEYEVENTF_KEYUP;
             release.ki.time = 0;
-            hold(id, release);
+            markHeld(id, release);
         }
         return;
     }
@@ -186,21 +186,28 @@ void Session::track(const INPUT& input) {
                 release.mi.dwFlags = button.up;
                 release.mi.mouseData = button.data;
                 release.mi.dwExtraInfo = input.mi.dwExtraInfo;
-                hold(kMouse | i, release);
+                markHeld(kMouse | i, release);
             }
-            if (hasButton(input.mi, button.up, button.data)) unhold(kMouse | i);
+            if (hasButton(input.mi, button.up, button.data)) markReleased(kMouse | i);
         }
     }
 }
 
-void Session::hold(std::uint32_t id, const INPUT& release) {
+void Session::markHeld(std::uint32_t id, const INPUT& release) {
     const bool alreadyHeld =
         std::any_of(held_.begin(), held_.end(), [id](const HeldInput& h) { return h.id == id; });
     if (!alreadyHeld) held_.push_back({id, release});
 }
 
-void Session::unhold(std::uint32_t id) {
+void Session::markReleased(std::uint32_t id) {
     std::erase_if(held_, [id](const HeldInput& h) { return h.id == id; });
+}
+
+std::function<Status()> makeReleaser(Session& session, std::vector<INPUT> releases) {
+    return [weak = session.weak_from_this(), releases = std::move(releases)]() -> Status {
+        if (const auto alive = weak.lock()) return alive->send(releases, SendMode::BestEffort);
+        return {}; // the Input is gone and already released everything
+    };
 }
 
 } // namespace inpututil::detail
