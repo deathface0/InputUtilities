@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <span>
 
 namespace inpututil {
 
@@ -13,68 +14,29 @@ struct NamedKey {
     Key key;
 };
 
-// The first entry of each key is its canonical name (returned by Key::name()).
-// Letters, digits, F1-F24 and Numpad0-9 are handled in code.
-constexpr NamedKey kNamedKeys[] = {
-    {"NumpadAdd", Key::NumpadAdd},
-    {"NumpadPlus", Key::NumpadAdd},
-    {"NumpadSubtract", Key::NumpadSubtract},
-    {"NumpadMinus", Key::NumpadSubtract},
-    {"NumpadMultiply", Key::NumpadMultiply},
-    {"NumpadDivide", Key::NumpadDivide},
-    {"NumpadDecimal", Key::NumpadDecimal},
-    {"NumpadEnter", Key::NumpadEnter},
+// One entry per Key constant, generated from KeyList.h. The first match is
+// the name returned by Key::name().
+#define INPUTUTIL_KEY_ENTRY(name, expr) {#name, Key::name},
+constexpr NamedKey kNamedKeys[] = {INPUTUTIL_NAMED_KEYS(INPUTUTIL_KEY_ENTRY)};
+#undef INPUTUTIL_KEY_ENTRY
 
-    {"Ctrl", Key::Ctrl},
+// Alternative spellings accepted by Key::parse (never returned by name()).
+constexpr NamedKey kAliases[] = {
     {"Control", Key::Ctrl},
-    {"LCtrl", Key::LCtrl},
-    {"RCtrl", Key::RCtrl},
-    {"Shift", Key::Shift},
-    {"LShift", Key::LShift},
-    {"RShift", Key::RShift},
-    {"Alt", Key::Alt},
-    {"LAlt", Key::LAlt},
-    {"RAlt", Key::RAlt},
-    {"AltGr", Key::RAlt},
-    {"LWin", Key::LWin},
-    {"Win", Key::LWin},
+    {"Escape", Key::Esc},
+    {"Return", Key::Enter},
     {"Windows", Key::LWin},
     {"Meta", Key::LWin},
     {"Super", Key::LWin},
-    {"RWin", Key::RWin},
-    {"Apps", Key::Apps},
     {"ContextMenu", Key::Apps},
-
-    {"Enter", Key::Enter},
-    {"Return", Key::Enter},
-    {"Esc", Key::Esc},
-    {"Escape", Key::Esc},
-    {"Tab", Key::Tab},
-    {"Space", Key::Space},
-    {"Backspace", Key::Backspace},
-    {"CapsLock", Key::CapsLock},
-    {"NumLock", Key::NumLock},
-    {"ScrollLock", Key::ScrollLock},
-    {"PrintScreen", Key::PrintScreen},
     {"PrtSc", Key::PrintScreen},
-    {"Pause", Key::Pause},
     {"Break", Key::Pause},
-
-    {"Insert", Key::Insert},
     {"Ins", Key::Insert},
-    {"Delete", Key::Delete},
     {"Del", Key::Delete},
-    {"Home", Key::Home},
-    {"End", Key::End},
-    {"PageUp", Key::PageUp},
     {"PgUp", Key::PageUp},
-    {"PageDown", Key::PageDown},
     {"PgDn", Key::PageDown},
-    {"Left", Key::Left},
-    {"Up", Key::Up},
-    {"Right", Key::Right},
-    {"Down", Key::Down},
-
+    {"NumpadPlus", Key::NumpadAdd},
+    {"NumpadMinus", Key::NumpadSubtract},
     {"Plus", Key::OemPlus},
     {"+", Key::OemPlus},
     {"Minus", Key::OemMinus},
@@ -83,15 +45,7 @@ constexpr NamedKey kNamedKeys[] = {
     {",", Key::OemComma},
     {"Period", Key::OemPeriod},
     {".", Key::OemPeriod},
-
-    {"VolumeMute", Key::VolumeMute},
     {"Mute", Key::VolumeMute},
-    {"VolumeDown", Key::VolumeDown},
-    {"VolumeUp", Key::VolumeUp},
-    {"MediaNext", Key::MediaNext},
-    {"MediaPrev", Key::MediaPrev},
-    {"MediaStop", Key::MediaStop},
-    {"MediaPlayPause", Key::MediaPlayPause},
     {"PlayPause", Key::MediaPlayPause},
 };
 
@@ -112,15 +66,10 @@ std::string_view trim(std::string_view text) {
     return text;
 }
 
-// Decimal number made only of digits, or nullopt.
-std::optional<int> parseDecimal(std::string_view text) {
-    if (text.empty() || text.size() > 3) return std::nullopt;
-    int value = 0;
-    for (char c : text) {
-        if (c < '0' || c > '9') return std::nullopt;
-        value = value * 10 + (c - '0');
-    }
-    return value;
+std::optional<Key> findIn(std::span<const NamedKey> table, std::string_view name) {
+    for (const NamedKey& named : table)
+        if (iequals(name, named.name)) return named.key;
+    return std::nullopt;
 }
 
 // Hexadecimal number with optional 0x prefix, up to 0xFFFF.
@@ -151,7 +100,7 @@ std::optional<Key> Key::parse(std::string_view name) {
     name = trim(name);
     if (name.empty()) return std::nullopt;
 
-    // Single letter or digit
+    // A single letter or digit: "a", "7"
     if (name.size() == 1) {
         const char c = name.front();
         if (std::isalpha(static_cast<unsigned char>(c)))
@@ -159,8 +108,8 @@ std::optional<Key> Key::parse(std::string_view name) {
         if (c >= '0' && c <= '9') return fromVk(static_cast<std::uint16_t>(c));
     }
 
-    for (const NamedKey& named : kNamedKeys)
-        if (iequals(name, named.name)) return named.key;
+    if (const auto key = findIn(kNamedKeys, name)) return key;
+    if (const auto key = findIn(kAliases, name)) return key;
 
     // Raw codes: vk:0x41, sc:0x11, sc:0xE04B
     if (istartsWith(name, "vk:")) {
@@ -175,30 +124,16 @@ std::optional<Key> Key::parse(std::string_view name) {
         return fromScanCode(*value);
     }
 
-    // F1-F24, Numpad0-9 / Num0-9
-    if (name.size() >= 2 && lower(name.front()) == 'f') {
-        if (const auto n = parseDecimal(name.substr(1)); n && *n >= 1 && *n <= 24)
-            return fromVk(static_cast<std::uint16_t>(0x70 + *n - 1));
-        return std::nullopt;
-    }
-    for (std::string_view prefix : {std::string_view("Numpad"), std::string_view("Num")}) {
-        if (istartsWith(name, prefix) && name.size() == prefix.size() + 1) {
-            const char d = name.back();
-            if (d >= '0' && d <= '9') return fromVk(static_cast<std::uint16_t>(0x60 + (d - '0')));
-        }
-    }
+    // Short keypad names: Num0..Num9
+    if (name.size() == 4 && istartsWith(name, "Num") && name.back() >= '0' && name.back() <= '9')
+        return fromVk(static_cast<std::uint16_t>(0x60 + (name.back() - '0')));
+
     return std::nullopt;
 }
 
 std::string Key::name() const {
     if (!valid()) return {};
 
-    if (!isScanCode()) {
-        const std::uint16_t code = vk();
-        if ((code >= 'A' && code <= 'Z') || (code >= '0' && code <= '9')) return std::string(1, static_cast<char>(code));
-        if (code >= 0x70 && code <= 0x87) return "F" + std::to_string(code - 0x70 + 1);
-        if (code >= 0x60 && code <= 0x69) return "Numpad" + std::to_string(code - 0x60);
-    }
     for (const NamedKey& named : kNamedKeys)
         if (named.key == *this) return std::string(named.name);
 

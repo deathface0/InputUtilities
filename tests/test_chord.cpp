@@ -7,16 +7,15 @@ using inpututil::Key;
 
 namespace {
 
-const Key kAllNamedKeys[] = {
-    Key::A, Key::M, Key::Z, Key::Digit0, Key::Digit9, Key::Numpad0, Key::Numpad9, Key::NumpadAdd,
-    Key::NumpadSubtract, Key::NumpadMultiply, Key::NumpadDivide, Key::NumpadDecimal, Key::NumpadEnter,
-    Key::F1, Key::F12, Key::F24, Key::Shift, Key::LShift, Key::RShift, Key::Ctrl, Key::LCtrl, Key::RCtrl,
-    Key::Alt, Key::LAlt, Key::RAlt, Key::AltGr, Key::Win, Key::LWin, Key::RWin, Key::Apps, Key::Enter, Key::Esc,
-    Key::Tab, Key::Space, Key::Backspace, Key::CapsLock, Key::NumLock, Key::ScrollLock, Key::PrintScreen,
-    Key::Pause, Key::Insert, Key::Delete, Key::Home, Key::End, Key::PageUp, Key::PageDown, Key::Left, Key::Up,
-    Key::Right, Key::Down, Key::OemPlus, Key::OemMinus, Key::OemComma, Key::OemPeriod, Key::VolumeMute,
-    Key::VolumeDown, Key::VolumeUp, Key::MediaNext, Key::MediaPrev, Key::MediaStop, Key::MediaPlayPause,
+struct NamedConstant {
+    const char* constant;
+    Key key;
 };
+
+// Every Key constant, generated from the same list as the constants.
+#define TEST_KEY_ENTRY(name, expr) {#name, Key::name},
+const NamedConstant kAllNamedKeys[] = {INPUTUTIL_NAMED_KEYS(TEST_KEY_ENTRY)};
+#undef TEST_KEY_ENTRY
 
 } // namespace
 
@@ -55,24 +54,31 @@ TEST_CASE("Key::parse rejects unknown names") {
     }
 }
 
-TEST_CASE("Key::name gives the canonical name or the raw form") {
+TEST_CASE("Key::name gives the name of the constant or the raw form") {
     CHECK(Key::Ctrl.name() == "Ctrl");
     CHECK(Key::A.name() == "A");
-    CHECK(Key::Digit7.name() == "7");
+    CHECK(Key::Digit7.name() == "Digit7");
     CHECK(Key::F5.name() == "F5");
     CHECK(Key::Numpad4.name() == "Numpad4");
     CHECK(Key::AltGr.name() == "RAlt");
     CHECK(Key::NumpadEnter.name() == "NumpadEnter");
-    CHECK(Key::OemPlus.name() == "Plus");
+    CHECK(Key::OemPlus.name() == "OemPlus");
     CHECK(Key::fromVk(0xE9).name() == "vk:0xE9");
     CHECK(Key::fromScanCode(0x76).name() == "sc:0x76");
     CHECK(Key::fromScanCode(0x4B, true).name() == "sc:0xE04B");
     CHECK(Key{}.name().empty());
 }
 
+TEST_CASE("every constant parses from its own name") {
+    for (const auto& [constant, key] : kAllNamedKeys) {
+        CAPTURE(constant);
+        CHECK(Key::parse(constant) == key);
+    }
+}
+
 TEST_CASE("every named key survives a name round trip") {
-    for (const Key key : kAllNamedKeys) {
-        CAPTURE(key.name());
+    for (const auto& [constant, key] : kAllNamedKeys) {
+        CAPTURE(constant);
         CHECK(Key::parse(key.name()) == key);
     }
     CHECK(Key::parse(Key::fromScanCode(0x4B, true).name()) == Key::fromScanCode(0x4B, true));
@@ -105,6 +111,6 @@ TEST_CASE("Chord::toString joins names and round trips") {
     CHECK(Chord::parse(chord.toString()) == chord);
 
     const Chord withPlus{{Key::Ctrl, Key::OemPlus}};
-    CHECK(withPlus.toString() == "Ctrl+Plus");
+    CHECK(withPlus.toString() == "Ctrl+OemPlus");
     CHECK(Chord::parse(withPlus.toString()) == withPlus);
 }
