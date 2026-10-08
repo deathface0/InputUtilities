@@ -141,8 +141,8 @@ std::string Key::name() const {
     return hexName("vk:", vk());
 }
 
-std::optional<Chord> Chord::parse(std::string_view text) {
-    Chord chord;
+std::optional<KeyCombo> KeyCombo::parse(std::string_view text) {
+    KeyCombo combo;
     std::size_t i = 0;
     const auto skipSpaces = [&] {
         while (i < text.size() && std::isspace(static_cast<unsigned char>(text[i]))) ++i;
@@ -162,17 +162,17 @@ std::optional<Chord> Chord::parse(std::string_view text) {
 
         const auto key = Key::parse(text.substr(start, i - start));
         if (!key) return std::nullopt;
-        if (std::find(chord.keys.begin(), chord.keys.end(), *key) != chord.keys.end()) return std::nullopt;
-        chord.keys.push_back(*key);
+        if (std::find(combo.keys.begin(), combo.keys.end(), *key) != combo.keys.end()) return std::nullopt;
+        combo.keys.push_back(*key);
 
         skipSpaces();
-        if (i >= text.size()) return chord;
+        if (i >= text.size()) return combo;
         if (text[i] != '+') return std::nullopt;
         ++i; // separator
     }
 }
 
-std::string Chord::toString() const {
+std::string KeyCombo::toString() const {
     std::string text;
     for (const Key& key : keys) {
         if (!text.empty()) text += '+';

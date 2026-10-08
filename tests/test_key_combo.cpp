@@ -2,7 +2,7 @@
 
 #include <inpututil/Key.h>
 
-using inpututil::Chord;
+using inpututil::KeyCombo;
 using inpututil::Key;
 
 namespace {
@@ -84,33 +84,33 @@ TEST_CASE("every named key survives a name round trip") {
     CHECK(Key::parse(Key::fromScanCode(0x4B, true).name()) == Key::fromScanCode(0x4B, true));
 }
 
-TEST_CASE("Chord::parse reads keys in press order") {
-    const auto chord = Chord::parse("Ctrl+Shift+Esc");
-    REQUIRE(chord);
-    REQUIRE(chord->keys.size() == 3);
-    CHECK(chord->keys[0] == Key::Ctrl);
-    CHECK(chord->keys[1] == Key::Shift);
-    CHECK(chord->keys[2] == Key::Esc);
+TEST_CASE("KeyCombo::parse reads keys in press order") {
+    const auto combo = KeyCombo::parse("Ctrl+Shift+Esc");
+    REQUIRE(combo);
+    REQUIRE(combo->keys.size() == 3);
+    CHECK(combo->keys[0] == Key::Ctrl);
+    CHECK(combo->keys[1] == Key::Shift);
+    CHECK(combo->keys[2] == Key::Esc);
 
-    CHECK(Chord::parse(" alt + f4 ") == Chord{{Key::Alt, Key::F4}});
-    CHECK(Chord::parse("Ctrl++") == Chord{{Key::Ctrl, Key::OemPlus}});
-    CHECK(Chord::parse("+") == Chord{{Key::OemPlus}});
-    CHECK(Chord::parse("F5") == Chord{{Key::F5}});
+    CHECK(KeyCombo::parse(" alt + f4 ") == KeyCombo{{Key::Alt, Key::F4}});
+    CHECK(KeyCombo::parse("Ctrl++") == KeyCombo{{Key::Ctrl, Key::OemPlus}});
+    CHECK(KeyCombo::parse("+") == KeyCombo{{Key::OemPlus}});
+    CHECK(KeyCombo::parse("F5") == KeyCombo{{Key::F5}});
 }
 
-TEST_CASE("Chord::parse rejects malformed chords") {
+TEST_CASE("KeyCombo::parse rejects malformed combos") {
     for (const char* text : {"", " ", "Ctrl+", "+Ctrl", "Ctrl+Ctrl", "Ctrl+foo", "Ctrl Shift"}) {
         CAPTURE(text);
-        CHECK_FALSE(Chord::parse(text));
+        CHECK_FALSE(KeyCombo::parse(text));
     }
 }
 
-TEST_CASE("Chord::toString joins names and round trips") {
-    const Chord chord{{Key::Ctrl, Key::Shift, Key::Esc}};
-    CHECK(chord.toString() == "Ctrl+Shift+Esc");
-    CHECK(Chord::parse(chord.toString()) == chord);
+TEST_CASE("KeyCombo::toString joins names and round trips") {
+    const KeyCombo combo{{Key::Ctrl, Key::Shift, Key::Esc}};
+    CHECK(combo.toString() == "Ctrl+Shift+Esc");
+    CHECK(KeyCombo::parse(combo.toString()) == combo);
 
-    const Chord withPlus{{Key::Ctrl, Key::OemPlus}};
+    const KeyCombo withPlus{{Key::Ctrl, Key::OemPlus}};
     CHECK(withPlus.toString() == "Ctrl+OemPlus");
-    CHECK(Chord::parse(withPlus.toString()) == withPlus);
+    CHECK(KeyCombo::parse(withPlus.toString()) == withPlus);
 }

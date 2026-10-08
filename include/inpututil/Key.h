@@ -76,17 +76,17 @@ INPUTUTIL_NAMED_KEYS(INPUTUTIL_DEFINE_KEY)
 #undef INPUTUTIL_DEFINE_KEY
 
 /// Keys pressed together, in press order (released in reverse).
-struct Chord {
+struct KeyCombo {
     std::vector<Key> keys;
 
     /// "Ctrl+Shift+Esc", " alt + f4 ", "Ctrl++" (Ctrl and Plus). nullopt if a
     /// name is unknown, a key repeats or the text is empty or ends with '+'.
-    static std::optional<Chord> parse(std::string_view text);
+    static std::optional<KeyCombo> parse(std::string_view text);
 
-    /// Key names joined with '+'; Chord::parse(c.toString()) == c.
+    /// Key names joined with '+'; KeyCombo::parse(c.toString()) == c.
     std::string toString() const;
 
-    friend bool operator==(const Chord&, const Chord&) = default;
+    friend bool operator==(const KeyCombo&, const KeyCombo&) = default;
 };
 
 } // namespace inpututil
