@@ -1,5 +1,7 @@
 #include "detail/InputBuilders.h"
 
+#include "detail/Coords.h"
+
 namespace inpututil::detail {
 
 bool isExtendedVk(std::uint16_t vk) {
@@ -77,6 +79,25 @@ std::optional<INPUT> makeKeyInput(const Key& key, KeyMode mode, bool up, Backend
     }
     if (resolved->extended) input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
     if (up) input.ki.dwFlags |= KEYEVENTF_KEYUP;
+    return input;
+}
+
+INPUT makeAbsoluteMove(Point target, const Rect& screen) {
+    const Point p = clampToScreen(target, screen);
+    INPUT input{};
+    input.type = INPUT_MOUSE;
+    input.mi.dx = toAbsolute(p.x, screen.left, screen.width);
+    input.mi.dy = toAbsolute(p.y, screen.top, screen.height);
+    input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
+    return input;
+}
+
+INPUT makeRelativeMove(int dx, int dy) {
+    INPUT input{};
+    input.type = INPUT_MOUSE;
+    input.mi.dx = dx;
+    input.mi.dy = dy;
+    input.mi.dwFlags = MOUSEEVENTF_MOVE;
     return input;
 }
 

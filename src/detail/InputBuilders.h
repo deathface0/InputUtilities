@@ -7,6 +7,7 @@
 
 #include "inpututil/Backend.h"
 #include "inpututil/Key.h"
+#include "inpututil/Point.h"
 
 // Builders that turn the public value types into Win32 INPUT events.
 namespace inpututil::detail {
@@ -29,5 +30,12 @@ std::optional<ResolvedKey> resolveKey(const Key& key, Backend& backend);
 /// Key event for the given mode, falling back to the other mode when the key
 /// cannot be expressed in the requested one. nullopt for an invalid key.
 std::optional<INPUT> makeKeyInput(const Key& key, KeyMode mode, bool up, Backend& backend);
+
+/// Absolute move to a pixel of the virtual desktop (clamped to it):
+/// MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK.
+INPUT makeAbsoluteMove(Point target, const Rect& screen);
+
+/// Relative move in mickeys (subject to the user's pointer speed and acceleration).
+INPUT makeRelativeMove(int dx, int dy);
 
 } // namespace inpututil::detail

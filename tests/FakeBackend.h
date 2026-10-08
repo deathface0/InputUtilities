@@ -21,9 +21,14 @@ public:
     std::uint32_t errorCode = 0;              // returned by lastError()
 
     // --- Screen and cursor --------------------------------------------------
-    inpututil::Point cursor{0, 0};
+    inpututil::Point cursor{0, 0}; // moved by the mouse events that get sent
     inpututil::Rect screen{0, 0, 1920, 1080};
     bool cursorAvailable = true;
+
+    /// How absolute coordinates (0..65535) become pixels. Windows does not
+    /// document it; these are the two models seen in practice.
+    enum class AbsoluteModel { A /* n * w / 65536 */, B /* n * (w - 1) / 65535 */ };
+    AbsoluteModel absoluteModel = AbsoluteModel::A;
 
     // --- Keyboard layout (filled by each test) ------------------------------
     std::map<wchar_t, std::int16_t> vkScan;          // character -> VkKeyScan value
@@ -129,6 +134,7 @@ public:
     unsigned sendInput(std::span<const tagINPUT> inputs) override {
         const std::size_t accepted = std::min(inputs.size(), acceptLimit.value_or(inputs.size()));
         batches.emplace_back(inputs.begin(), inputs.begin() + static_cast<std::ptrdiff_t>(accepted));
+        for (std::size_t i = 0; i < accepted; ++i) applyMove(inputs[i]);
         return static_cast<unsigned>(accepted);
     }
 
@@ -171,6 +177,22 @@ public:
     std::chrono::milliseconds doubleClickTime() override { return doubleClick; }
 
 private:
+    int toPixel(LONG normalized, int origin, int extent) const {
+        const long long n = normalized;
+        if (absoluteModel == AbsoluteModel::A) return origin + static_cast<int>(n * extent / 65536);
+        return origin + static_cast<int>(n * (extent - 1) / 65535);
+    }
+
+    void applyMove(const INPUT& in) {
+        if (in.type != INPUT_MOUSE || !(in.mi.dwFlags & MOUSEEVENTF_MOVE)) return;
+        if (in.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) {
+            cursor = {toPixel(in.mi.dx, screen.left, screen.width), toPixel(in.mi.dy, screen.top, screen.height)};
+        } else {
+            cursor.x = std::clamp(cursor.x + static_cast<int>(in.mi.dx), screen.left, screen.left + screen.width - 1);
+            cursor.y = std::clamp(cursor.y + static_cast<int>(in.mi.dy), screen.top, screen.top + screen.height - 1);
+        }
+    }
+
     void loadLettersAndDigits() {
         for (wchar_t c = L'a'; c <= L'z'; ++c) vkScan[c] = static_cast<std::int16_t>(c - L'a' + 'A');
         for (wchar_t c = L'A'; c <= L'Z'; ++c) vkScan[c] = static_cast<std::int16_t>(0x0100 | c);

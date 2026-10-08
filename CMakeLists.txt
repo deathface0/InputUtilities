@@ -35,6 +35,7 @@ add_library(inpututil
     src/KeyNames.cpp
     src/Status.cpp
     src/Win32Backend.cpp
+    src/detail/Coords.cpp
     src/detail/InputBuilders.cpp
     src/detail/Session.cpp
     src/detail/Text.cpp
