@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include <string_view>
+#include <utility>
 
 #include "inpututil/Hold.h"
 #include "inpututil/Key.h"
@@ -83,6 +84,14 @@ private:
     friend class Input;
 
     Keyboard(detail::Session* session, KeyMode mode) noexcept : session_(session), mode_(mode) {}
+
+    // Used by Input's move operations: takes the session and leaves `other` empty.
+    Keyboard(Keyboard&& other) noexcept : session_(std::exchange(other.session_, nullptr)), mode_(other.mode_) {}
+    Keyboard& operator=(Keyboard&& other) noexcept {
+        session_ = std::exchange(other.session_, nullptr);
+        mode_ = other.mode_;
+        return *this;
+    }
 
     detail::Session* session_; // owned by Input; null after the Input was moved from
     KeyMode mode_;

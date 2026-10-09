@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include <optional>
+#include <utility>
 
 #include "inpututil/Hold.h"
 #include "inpututil/Motion.h"
@@ -88,6 +89,15 @@ private:
     friend class Input;
 
     Mouse(detail::Session* session, bool verifyCursor) noexcept : session_(session), verifyCursor_(verifyCursor) {}
+
+    // Used by Input's move operations: takes the session and leaves `other` empty.
+    Mouse(Mouse&& other) noexcept
+        : session_(std::exchange(other.session_, nullptr)), verifyCursor_(other.verifyCursor_) {}
+    Mouse& operator=(Mouse&& other) noexcept {
+        session_ = std::exchange(other.session_, nullptr);
+        verifyCursor_ = other.verifyCursor_;
+        return *this;
+    }
 
     Status moveAbsolute(Point from, Point target, const Motion& motion);
     Status scrollAxis(double notches, std::chrono::milliseconds duration, bool horizontal);

@@ -189,6 +189,31 @@ TEST_CASE("a moved Input keeps working and the moved-from one is empty") {
     CHECK(target.heldCount() == 0);
 }
 
+TEST_CASE("move assignment releases the target's keys and takes over the source") {
+    auto targetFake = makeFake();
+    auto sourceFake = makeFake();
+    sourceFake->moveCursor = false;
+    Input target(Config{.backend = targetFake});
+    Input source(Config{.keyMode = KeyMode::ScanCode, .verifyCursor = true, .backend = sourceFake});
+    REQUIRE(target.keyboard.down(Key::A));
+    REQUIRE(source.keyboard.down(Key::B));
+
+    target = std::move(source);
+    const auto released = targetFake->allSent();
+    REQUIRE(released.size() == 2);
+    CHECK(released[1].ki.wVk == 'A');
+    CHECK(isUp(released[1]));
+
+    CHECK(target.heldCount() == 1);
+    CHECK(target.keyboard.isHeld(Key::B));
+    CHECK(target.keyboard.mode() == KeyMode::ScanCode);
+    CHECK(target.mouse.moveTo({800, 600}) == Error::TargetNotReached); // the source's verifyCursor and backend
+
+    CHECK(source.keyboard.down(Key::C) == Error::InvalidArgument);
+    CHECK(source.mouse.down() == Error::InvalidArgument);
+    CHECK(source.heldCount() == 0);
+}
+
 TEST_CASE("Input uses the Win32 backend by default") {
     Input input; // no input is sent: only construction and queries
     CHECK(input.heldCount() == 0);

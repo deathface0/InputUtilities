@@ -1,7 +1,5 @@
 #include "inpututil/Mouse.h"
 
-#include <algorithm>
-#include <cmath>
 #include <random>
 #include <vector>
 
@@ -22,6 +20,14 @@ std::mt19937 makeRng(const Motion& motion) {
 }
 
 Status cursorUnavailable(Backend& backend) { return {Error::SystemFailure, backend.lastError()}; }
+
+// One button event; a release goes best effort so a button is never left down.
+Status sendButton(detail::Session* session, MouseButton button, bool up) {
+    if (!session) return Error::InvalidArgument;
+    const INPUT input = detail::makeButtonInput(button, up);
+    const auto sendMode = up ? detail::SendMode::BestEffort : detail::SendMode::StopOnFailure;
+    return session->send(std::span(&input, 1), sendMode);
+}
 
 } // namespace
 
@@ -77,17 +83,9 @@ Status Mouse::moveRaw(int dx, int dy, const Motion& motion) {
     return detail::playPath(*session_, {0, 0}, path, relative);
 }
 
-Status Mouse::down(MouseButton button) {
-    if (!session_) return Error::InvalidArgument;
-    const INPUT input = detail::makeButtonInput(button, false);
-    return session_->send(std::span(&input, 1));
-}
+Status Mouse::down(MouseButton button) { return sendButton(session_, button, false); }
 
-Status Mouse::up(MouseButton button) {
-    if (!session_) return Error::InvalidArgument;
-    const INPUT input = detail::makeButtonInput(button, true);
-    return session_->send(std::span(&input, 1), detail::SendMode::BestEffort);
-}
+Status Mouse::up(MouseButton button) { return sendButton(session_, button, true); }
 
 Hold Mouse::hold(MouseButton button) {
     if (const Status status = down(button); !status) return Hold(nullptr, status);
@@ -98,41 +96,41 @@ Status Mouse::click(MouseButton button, const ClickOptions& options) {
     if (!session_) return Error::InvalidArgument;
     if (options.count < 1) return Error::InvalidArgument;
 
-    const INPUT down = detail::makeButtonInput(button, false);
-    const INPUT up = detail::makeButtonInput(button, true);
+    const INPUT downEvent = detail::makeButtonInput(button, false);
+    const INPUT upEvent = detail::makeButtonInput(button, true);
     const auto zero = std::chrono::milliseconds::zero();
+
+    // Sends the events; if the system rejects them, releases the button before failing.
+    const auto sendOrRelease = [&](std::span<const INPUT> events) {
+        const Status status = session_->send(events);
+        if (!status) session_->send(std::span(&upEvent, 1), detail::SendMode::BestEffort);
+        return status;
+    };
 
     // No timing at all: every click in one batch.
     if (options.hold <= zero && options.interval <= zero) {
         std::vector<INPUT> batch;
         for (int i = 0; i < options.count; ++i) {
-            batch.push_back(down);
-            batch.push_back(up);
+            batch.push_back(downEvent);
+            batch.push_back(upEvent);
         }
-        const Status status = session_->send(batch);
-        if (!status) session_->send(std::span(&up, 1), detail::SendMode::BestEffort);
-        return status;
+        return sendOrRelease(batch);
     }
 
     for (int i = 0; i < options.count; ++i) {
-        if (i > 0)
+        if (i > 0) {
             if (const Status status = session_->wait(options.interval); !status) return status;
+        }
 
         if (options.hold <= zero) {
-            const INPUT clickEvents[] = {down, up};
-            if (const Status status = session_->send(clickEvents); !status) {
-                session_->send(std::span(&up, 1), detail::SendMode::BestEffort);
-                return status;
-            }
+            const INPUT clickEvents[] = {downEvent, upEvent};
+            if (const Status status = sendOrRelease(clickEvents); !status) return status;
             continue;
         }
 
-        if (const Status status = session_->send(std::span(&down, 1)); !status) {
-            session_->send(std::span(&up, 1), detail::SendMode::BestEffort);
-            return status;
-        }
+        if (const Status status = sendOrRelease(std::span(&downEvent, 1)); !status) return status;
         if (const Status status = session_->wait(options.hold); !status) return status; // aborted: released
-        if (const Status status = session_->send(std::span(&up, 1), detail::SendMode::BestEffort); !status)
+        if (const Status status = session_->send(std::span(&upEvent, 1), detail::SendMode::BestEffort); !status)
             return status;
     }
     return {};
