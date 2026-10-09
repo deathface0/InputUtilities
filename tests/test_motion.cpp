@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include <inpututil/Input.h>
 #include <inpututil/Motion.h>
 
 using inpututil::Easing;
@@ -148,7 +149,7 @@ TEST_CASE("jitter moves intermediate points by at most jitterPx and never the la
 
 TEST_CASE("playPath sends every point at its deadline") {
     auto fake = std::make_shared<FakeBackend>();
-    inpututil::detail::Session session(fake, 0x49555449);
+    inpututil::detail::Session session(fake, inpututil::kDefaultExtraInfoTag);
     const auto path = plan({0, 0}, {200, 100}, Motion::linear(100ms));
     const auto start = fake->now();
 
@@ -167,7 +168,7 @@ TEST_CASE("playPath sends every point at its deadline") {
 TEST_CASE("late wake-ups do not accumulate") {
     auto fake = std::make_shared<FakeBackend>();
     fake->sleepOvershoot = 2ms;
-    inpututil::detail::Session session(fake, 0x49555449);
+    inpututil::detail::Session session(fake, inpututil::kDefaultExtraInfoTag);
     const auto path = plan({0, 0}, {200, 0}, Motion::linear(100ms)); // 20 steps
     const auto start = fake->now();
 
@@ -184,7 +185,7 @@ TEST_CASE("playPath stops at the first rejected point") {
     auto fake = std::make_shared<FakeBackend>();
     fake->rejectAfter = 5;
     fake->errorCode = ERROR_ACCESS_DENIED;
-    inpututil::detail::Session session(fake, 0x49555449);
+    inpututil::detail::Session session(fake, inpututil::kDefaultExtraInfoTag);
     const auto path = plan({0, 0}, {200, 0}, Motion::linear(100ms));
 
     const auto absolute = [&](Point, Point next) { return inpututil::detail::makeAbsoluteMove(next, fake->screen); };

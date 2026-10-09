@@ -21,11 +21,7 @@ namespace {
 constexpr TypeOptions kKeystrokes{.mode = TextMode::Keystrokes};
 
 struct Fixture {
-    std::shared_ptr<FakeBackend> fake = [] {
-        auto backend = std::make_shared<FakeBackend>();
-        backend->loadUsLayout();
-        return backend;
-    }();
+    std::shared_ptr<FakeBackend> fake = FakeBackend::withUsLayout();
     Input input{Config{.backend = fake}};
 };
 
@@ -34,14 +30,10 @@ bool isUnicode(const INPUT& in, wchar_t unit, bool up) {
     return in.type == INPUT_KEYBOARD && in.ki.wVk == 0 && in.ki.wScan == unit && in.ki.dwFlags == flags;
 }
 
-bool isKey(const INPUT& in, WORD vk, bool up) {
-    return in.type == INPUT_KEYBOARD && in.ki.wVk == vk && ((in.ki.dwFlags & KEYEVENTF_KEYUP) != 0) == up;
-}
-
 // Virtual keys of a batch, as "vk↓"/"vk↑" pairs, for compact comparisons.
 std::vector<std::pair<WORD, bool>> keysOf(const std::vector<INPUT>& batch) {
     std::vector<std::pair<WORD, bool>> keys;
-    for (const INPUT& in : batch) keys.emplace_back(in.ki.wVk, (in.ki.dwFlags & KEYEVENTF_KEYUP) != 0);
+    for (const INPUT& in : batch) keys.emplace_back(in.ki.wVk, isKeyUp(in));
     return keys;
 }
 
@@ -101,11 +93,11 @@ TEST_CASE_FIXTURE(Fixture, "invalid text is rejected before anything is sent") {
 TEST_CASE_FIXTURE(Fixture, "line breaks and tabs are typed as Enter and Tab") {
     REQUIRE(input.keyboard.type("a\r\nb\tc\nd\re"));
     REQUIRE(fake->batches.size() == 9);
-    CHECK(isKey(fake->batches[1][0], VK_RETURN, false));
-    CHECK(isKey(fake->batches[1][1], VK_RETURN, true));
-    CHECK(isKey(fake->batches[3][0], VK_TAB, false));
-    CHECK(isKey(fake->batches[5][0], VK_RETURN, false));
-    CHECK(isKey(fake->batches[7][0], VK_RETURN, false));
+    CHECK(isKeyEvent(fake->batches[1][0], VK_RETURN, false));
+    CHECK(isKeyEvent(fake->batches[1][1], VK_RETURN, true));
+    CHECK(isKeyEvent(fake->batches[3][0], VK_TAB, false));
+    CHECK(isKeyEvent(fake->batches[5][0], VK_RETURN, false));
+    CHECK(isKeyEvent(fake->batches[7][0], VK_RETURN, false));
     CHECK(isUnicode(fake->batches[8][0], L'e', false));
 }
 

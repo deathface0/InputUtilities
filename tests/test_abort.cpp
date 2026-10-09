@@ -17,11 +17,7 @@ using namespace std::chrono_literals;
 namespace {
 
 struct Fixture {
-    std::shared_ptr<FakeBackend> fake = [] {
-        auto backend = std::make_shared<FakeBackend>();
-        backend->loadUsLayout();
-        return backend;
-    }();
+    std::shared_ptr<FakeBackend> fake = FakeBackend::withUsLayout();
     Input input{Config{.abortKey = Key::F12, .backend = fake}};
 
     void pressF12After(std::chrono::milliseconds delay) { fake->pressedFrom[VK_F12] = fake->now() + delay; }

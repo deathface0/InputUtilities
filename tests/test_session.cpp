@@ -5,6 +5,8 @@
 
 #include <thread>
 
+#include <inpututil/Input.h>
+
 using inpututil::Error;
 using inpututil::detail::SendMode;
 using inpututil::detail::Session;
@@ -12,7 +14,7 @@ using namespace std::chrono_literals;
 
 namespace {
 
-constexpr std::uintptr_t kTag = 0x49555449;
+constexpr std::uintptr_t kTag = inpututil::kDefaultExtraInfoTag;
 
 INPUT key(WORD vk, WORD scan, DWORD flags = 0) {
     INPUT in{};

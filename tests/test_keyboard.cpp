@@ -26,8 +26,6 @@ struct Fixture {
     Input input{Config{.backend = fake}};
 };
 
-bool isUp(const INPUT& in) { return (in.ki.dwFlags & KEYEVENTF_KEYUP) != 0; }
-
 } // namespace
 
 TEST_CASE_FIXTURE(Fixture, "down and up send one event each in the configured mode") {
@@ -37,8 +35,8 @@ TEST_CASE_FIXTURE(Fixture, "down and up send one event each in the configured mo
     REQUIRE(sent.size() == 2);
     CHECK(sent[0].ki.wVk == 'A');
     CHECK(sent[0].ki.wScan == 0x1E);
-    CHECK_FALSE(isUp(sent[0]));
-    CHECK(isUp(sent[1]));
+    CHECK_FALSE(isKeyUp(sent[0]));
+    CHECK(isKeyUp(sent[1]));
 
     input.keyboard.setMode(KeyMode::ScanCode);
     CHECK(input.keyboard.mode() == KeyMode::ScanCode);
@@ -82,7 +80,7 @@ TEST_CASE_FIXTURE(Fixture, "press sends the whole combo atomically and releases 
     for (std::size_t i = 0; i < 6; ++i) {
         CAPTURE(i);
         CHECK(batch[i].ki.wVk == expected[i]);
-        CHECK(isUp(batch[i]) == (i >= 3));
+        CHECK(isKeyUp(batch[i]) == (i >= 3));
     }
     CHECK(input.heldCount() == 0);
 }
@@ -163,7 +161,7 @@ TEST_CASE("releaseOnDestroy decides whether held keys are released") {
         REQUIRE(input.keyboard.down(Key::A));
     }
     REQUIRE(fake->batches.size() == 2);
-    CHECK(isUp(fake->batches[1][0]));
+    CHECK(isKeyUp(fake->batches[1][0]));
 
     fake->batches.clear();
     {
@@ -202,7 +200,7 @@ TEST_CASE("move assignment releases the target's keys and takes over the source"
     const auto released = targetFake->allSent();
     REQUIRE(released.size() == 2);
     CHECK(released[1].ki.wVk == 'A');
-    CHECK(isUp(released[1]));
+    CHECK(isKeyUp(released[1]));
 
     CHECK(target.heldCount() == 1);
     CHECK(target.keyboard.isHeld(Key::B));

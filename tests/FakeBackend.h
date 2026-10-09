@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <vector>
@@ -111,6 +112,13 @@ public:
         vkScan[L'@'] = 0x0132;
         vkScan[L'-'] = 0x00BD;
         vkScan[L'_'] = 0x01BD;
+    }
+
+    /// A shared fake with the US layout loaded, the usual backend of a test fixture.
+    static std::shared_ptr<FakeBackend> withUsLayout() {
+        auto fake = std::make_shared<FakeBackend>();
+        fake->loadUsLayout();
+        return fake;
     }
 
     /// Characters of a Spanish layout: '@' and '€' need AltGr (Ctrl+Alt),

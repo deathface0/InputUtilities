@@ -4,6 +4,7 @@
 #include "detail/InputBuilders.h"
 #include "detail/Session.h"
 
+#include <inpututil/Input.h>
 #include <inpututil/Key.h>
 
 using inpututil::Key;
@@ -128,7 +129,7 @@ TEST_CASE("building key events") {
 TEST_CASE("a key pressed in one mode and released in the other is no longer held") {
     auto fake = std::make_shared<FakeBackend>();
     fake->loadUsScanCodes();
-    inpututil::detail::Session session(fake, 0x49555449);
+    inpututil::detail::Session session(fake, inpututil::kDefaultExtraInfoTag);
 
     const INPUT down[] = {*makeKeyInput(Key::Left, KeyMode::VirtualKey, false, *fake)};
     const INPUT up[] = {*makeKeyInput(Key::Left, KeyMode::ScanCode, true, *fake)};

@@ -32,8 +32,7 @@ add_executable(inpututil_tests
     test_windows_names.cpp
 )
 target_include_directories(inpututil_tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(inpututil_tests PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
-target_link_libraries(inpututil_tests PRIVATE inpututil::inpututil inpututil_doctest inpututil_warnings)
+target_link_libraries(inpututil_tests PRIVATE inpututil::inpututil inpututil_doctest inpututil_build_options)
 
 add_test(NAME inpututil_tests COMMAND inpututil_tests)
 
@@ -41,8 +40,7 @@ add_test(NAME inpututil_tests COMMAND inpututil_tests)
 # backend prints the events). Each case must print the release before dying.
 add_executable(inpututil_emergency_helper emergency_helper.cpp)
 target_include_directories(inpututil_emergency_helper PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(inpututil_emergency_helper PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
-target_link_libraries(inpututil_emergency_helper PRIVATE inpututil::inpututil inpututil_warnings)
+target_link_libraries(inpututil_emergency_helper PRIVATE inpututil::inpututil inpututil_build_options)
 
 foreach(death crash terminate abort exit)
     add_test(NAME emergency_${death} COMMAND inpututil_emergency_helper ${death})

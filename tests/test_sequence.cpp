@@ -20,17 +20,9 @@ using namespace std::chrono_literals;
 namespace {
 
 struct Fixture {
-    std::shared_ptr<FakeBackend> fake = [] {
-        auto backend = std::make_shared<FakeBackend>();
-        backend->loadUsLayout();
-        return backend;
-    }();
+    std::shared_ptr<FakeBackend> fake = FakeBackend::withUsLayout();
     Input input{Config{.backend = fake}};
 };
-
-bool isKeyEvent(const INPUT& in, WORD vk, bool up) {
-    return in.type == INPUT_KEYBOARD && in.ki.wVk == vk && ((in.ki.dwFlags & KEYEVENTF_KEYUP) != 0) == up;
-}
 
 } // namespace
 

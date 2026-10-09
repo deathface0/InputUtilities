@@ -5,6 +5,8 @@
 #include "detail/InputBuilders.h"
 #include "detail/Session.h"
 
+#include <inpututil/Input.h>
+
 using inpututil::Point;
 using inpututil::Rect;
 using inpututil::detail::clampToScreen;
@@ -89,7 +91,7 @@ TEST_CASE("move events carry the right flags") {
 TEST_CASE("sent moves put the simulated cursor exactly on target") {
     auto fake = std::make_shared<FakeBackend>();
     fake->screen = {-1920, 0, 3840, 1080};
-    inpututil::detail::Session session(fake, 0x49555449);
+    inpututil::detail::Session session(fake, inpututil::kDefaultExtraInfoTag);
 
     for (const auto model : {FakeBackend::AbsoluteModel::A, FakeBackend::AbsoluteModel::B}) {
         fake->absoluteModel = model;

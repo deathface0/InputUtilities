@@ -16,13 +16,14 @@ option(INPUTUTIL_INSTALL "Generate the install target" ${PROJECT_IS_TOP_LEVEL})
 
 include(GNUInstallDirs)
 
-# Warning flags shared by the library, tests and examples.
-add_library(inpututil_warnings INTERFACE)
+# Warning flags and Win32 definitions shared by the library, tests and examples.
+add_library(inpututil_build_options INTERFACE)
+target_compile_definitions(inpututil_build_options INTERFACE NOMINMAX WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
 if(MSVC)
-    target_compile_options(inpututil_warnings INTERFACE /W4 /permissive- /utf-8
+    target_compile_options(inpututil_build_options INTERFACE /W4 /permissive- /utf-8
         $<$<BOOL:${INPUTUTIL_WARNINGS_AS_ERRORS}>:/WX>)
 else()
-    target_compile_options(inpututil_warnings INTERFACE -Wall -Wextra -Wpedantic
+    target_compile_options(inpututil_build_options INTERFACE -Wall -Wextra -Wpedantic
         $<$<BOOL:${INPUTUTIL_WARNINGS_AS_ERRORS}>:-Werror>)
 endif()
 
@@ -53,10 +54,7 @@ target_include_directories(inpututil
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_definitions(inpututil PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
-target_link_libraries(inpututil
-    PUBLIC user32 winmm
-    PRIVATE $<BUILD_INTERFACE:inpututil_warnings>)
+target_link_libraries(inpututil PRIVATE user32 winmm $<BUILD_INTERFACE:inpututil_build_options>)
 
 if(INPUTUTIL_INSTALL)
     include(CMakePackageConfigHelpers)
