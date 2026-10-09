@@ -11,12 +11,11 @@ double easingValue(Easing easing, double t) noexcept {
         return t;
     case Easing::SmoothStep:
         return t * t * (3.0 - 2.0 * t);
-    case Easing::EaseInOutCubic:
+    case Easing::EaseInOutCubic: {
         if (t < 0.5) return 4.0 * t * t * t;
-        {
-            const double u = -2.0 * t + 2.0;
-            return 1.0 - u * u * u / 2.0;
-        }
+        const double u = -2.0 * t + 2.0;
+        return 1.0 - u * u * u / 2.0;
+    }
     }
     return t;
 }

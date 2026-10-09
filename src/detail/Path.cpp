@@ -22,7 +22,7 @@ Vec bezier(Vec p0, Vec c1, Vec c2, Vec p3, double t) {
     return p0 * (u * u * u) + c1 * (3 * u * u * t) + c2 * (3 * u * t * t) + p3 * (t * t * t);
 }
 
-Point round(Vec v) { return {static_cast<int>(std::lround(v.x)), static_cast<int>(std::lround(v.y))}; }
+Point toPoint(Vec v) { return {static_cast<int>(std::lround(v.x)), static_cast<int>(std::lround(v.y))}; }
 
 } // namespace
 
@@ -58,7 +58,7 @@ std::vector<PathStep> planPath(Point from, Point to, const Motion& motion, std::
     path.reserve(static_cast<std::size_t>(steps));
     for (long long i = 1; i <= steps; ++i) {
         const double e = easingValue(motion.easing, static_cast<double>(i) / static_cast<double>(steps));
-        Point point = round(motion.curved ? bezier(start, c1, c2, end, e) : start + delta * e);
+        Point point = toPoint(motion.curved ? bezier(start, c1, c2, end, e) : start + delta * e);
         if (i < steps && motion.jitterPx > 0) {
             point.x += jitter(rng);
             point.y += jitter(rng);

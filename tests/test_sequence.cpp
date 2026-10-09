@@ -4,10 +4,13 @@
 
 #include <inpututil/inpututil.h>
 
+#include <limits>
+
 using inpututil::Config;
 using inpututil::Error;
 using inpututil::Input;
 using inpututil::Key;
+using inpututil::KeyCombo;
 using inpututil::Motion;
 using inpututil::Point;
 using inpututil::Sequence;
@@ -82,6 +85,11 @@ TEST_CASE_FIXTURE(Fixture, "a bad step anywhere fails the sequence before anythi
     CHECK(input.play(Sequence{}.tap(Key::A).click(inpututil::MouseButton::Left, {.count = 0})) ==
           Error::InvalidArgument);
     CHECK(input.play(Sequence{}.down(Key{})) == Error::InvalidArgument);
+    CHECK(input.play(Sequence{}.up(Key{})) == Error::InvalidArgument);
+    CHECK(input.play(Sequence{}.tap(Key::A).press(KeyCombo{})) == Error::InvalidArgument);
+    CHECK(input.play(Sequence{}.tap(Key::A).press(KeyCombo{{Key::A, Key{}}})) == Error::InvalidArgument);
+    CHECK(input.play(Sequence{}.tap(Key::A).scroll(std::numeric_limits<double>::infinity())) ==
+          Error::InvalidArgument);
     CHECK(fake->batches.empty());
 }
 

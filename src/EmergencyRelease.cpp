@@ -2,7 +2,6 @@
 
 #include <windows.h>
 
-#include <algorithm>
 #include <csignal>
 #include <cstdlib>
 #include <exception>

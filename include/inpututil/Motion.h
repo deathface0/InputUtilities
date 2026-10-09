@@ -41,27 +41,16 @@ struct Motion {
     static constexpr Motion instant() noexcept { return Motion{}; }
 
     static constexpr Motion linear(std::chrono::milliseconds duration) noexcept {
-        Motion motion;
-        motion.duration = duration;
-        motion.easing = Easing::Linear;
-        return motion;
+        return {.duration = duration, .easing = Easing::Linear};
     }
 
     static constexpr Motion smooth(std::chrono::milliseconds duration) noexcept {
-        Motion motion;
-        motion.duration = duration;
-        motion.easing = Easing::SmoothStep;
-        return motion;
+        return {.duration = duration, .easing = Easing::SmoothStep};
     }
 
     /// Curved path, natural acceleration and a pixel of jitter.
     static constexpr Motion human(std::chrono::milliseconds duration) noexcept {
-        Motion motion;
-        motion.duration = duration;
-        motion.easing = Easing::EaseInOutCubic;
-        motion.curved = true;
-        motion.jitterPx = 1;
-        return motion;
+        return {.duration = duration, .easing = Easing::EaseInOutCubic, .curved = true, .jitterPx = 1};
     }
 };
 

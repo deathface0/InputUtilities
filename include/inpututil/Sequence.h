@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -111,6 +112,11 @@ public:
 
 private:
     friend class Input;
+
+    Sequence& add(detail::SequenceStep step) {
+        steps_.push_back(std::move(step));
+        return *this;
+    }
 
     std::vector<detail::SequenceStep> steps_;
 };

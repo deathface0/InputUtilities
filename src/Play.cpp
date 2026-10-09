@@ -20,28 +20,22 @@ template <typename... Fs> struct Overloaded : Fs... {
 // Checks a step without sending anything, so a bad step anywhere fails the
 // whole sequence up front.
 Status validate(const detail::SequenceStep& step, KeyMode mode, Backend& backend) {
-    if (std::holds_alternative<steps::Invalid>(step)) return Error::InvalidArgument;
-
-    if (const auto* s = std::get_if<steps::KeyDown>(&step))
-        return detail::makeKeyInput(s->key, mode, false, backend) ? Status{} : Error::InvalidArgument;
-    if (const auto* s = std::get_if<steps::KeyUp>(&step))
-        return detail::makeKeyInput(s->key, mode, true, backend) ? Status{} : Error::InvalidArgument;
-    if (const auto* s = std::get_if<steps::Press>(&step)) {
-        if (s->combo.keys.empty()) return Error::InvalidArgument;
-        for (const Key& key : s->combo.keys)
-            if (!detail::makeKeyInput(key, mode, false, backend)) return Error::InvalidArgument;
-        return {};
-    }
-    if (const auto* s = std::get_if<steps::Type>(&step)) {
-        std::vector<detail::InputGroup> groups;
-        return detail::buildTextGroups(s->text, s->options.mode, s->options.fallbackToUnicode, mode, backend,
-                                       groups);
-    }
-    if (const auto* s = std::get_if<steps::Click>(&step))
-        return s->options.count >= 1 ? Status{} : Error::InvalidArgument;
-    if (const auto* s = std::get_if<steps::Scroll>(&step))
-        return detail::wheelDelta(s->notches) ? Status{} : Error::InvalidArgument;
-    return {};
+    const auto valid = [](bool ok) -> Status { return ok ? Status{} : Error::InvalidArgument; };
+    const auto check = Overloaded{
+        [&](const steps::Invalid&) { return valid(false); },
+        [&](const steps::KeyDown& s) { return valid(detail::makeKeyInput(s.key, mode, false, backend).has_value()); },
+        [&](const steps::KeyUp& s) { return valid(detail::makeKeyInput(s.key, mode, true, backend).has_value()); },
+        [&](const steps::Press& s) { return valid(detail::makeComboEvents(s.combo.keys, mode, backend).has_value()); },
+        [&](const steps::Type& s) {
+            std::vector<detail::InputGroup> groups;
+            return detail::buildTextGroups(s.text, s.options.mode, s.options.fallbackToUnicode, mode, backend,
+                                           groups);
+        },
+        [&](const steps::Click& s) { return valid(s.options.count >= 1); },
+        [&](const steps::Scroll& s) { return valid(detail::wheelDelta(s.notches).has_value()); },
+        [](const auto&) { return Status{}; }, // moves and waits are always valid
+    };
+    return std::visit(check, step);
 }
 
 } // namespace
