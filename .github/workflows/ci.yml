@@ -38,7 +38,7 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           $config = if ('${{ matrix.config }}' -eq 'debug') { 'Debug' } else { 'Release' }
           cmake --install build/msvc-ninja --config $config --prefix build/install
-          cmake -S tests/package -B build/package -G Ninja -DCMAKE_BUILD_TYPE=$config -DCMAKE_PREFIX_PATH="$PWD/build/install"
+          cmake -S tests/package -B build/package -G Ninja "-DCMAKE_BUILD_TYPE=$config" "-DCMAKE_PREFIX_PATH=$PWD/build/install"
           cmake --build build/package
           ./build/package/package_test.exe
 
