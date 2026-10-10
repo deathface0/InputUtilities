@@ -304,6 +304,8 @@ Behaviour changes worth knowing:
 - Scan-code typing now presses Shift/AltGr where the layout needs it (`scTypeStr(L"PlayerOne_123")` used to type `playerone-123`).
 - Absolute coordinates cover all monitors and land on the exact pixel (v1 was limited to the primary monitor and could be one pixel short).
 
+The full list of changes is in [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
 [MIT](LICENSE)
