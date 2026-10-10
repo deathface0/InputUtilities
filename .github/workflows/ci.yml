@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  msvc:
+    name: MSVC ${{ matrix.config }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [debug, release]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up the MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure
+        run: cmake --preset msvc-ninja -DINPUTUTIL_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build --preset msvc-ninja-${{ matrix.config }}
+
+      - name: Test
+        run: ctest --preset msvc-ninja-${{ matrix.config }}
+
+      - name: Build a project against the installed package
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $config = if ('${{ matrix.config }}' -eq 'debug') { 'Debug' } else { 'Release' }
+          cmake --install build/msvc-ninja --config $config --prefix build/install
+          cmake -S tests/package -B build/package -G Ninja "-DCMAKE_BUILD_TYPE=$config" "-DCMAKE_PREFIX_PATH=$PWD/build/install"
+          cmake --build build/package
+          ./build/package/package_test.exe
+
+  mingw:
+    name: MinGW-w64 GCC
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up MSYS2 (UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+
+      - name: Configure
+        run: cmake --preset mingw -DINPUTUTIL_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build --preset mingw
+
+      - name: Test
+        run: ctest --preset mingw
+
+      - name: Build a project against the installed package
+        run: |
+          set -e
+          cmake --install build/mingw --prefix build/install
+          cmake -S tests/package -B build/package -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="$PWD/build/install"
+          cmake --build build/package
+          ./build/package/package_test.exe
+
+  format:
+    name: clang-format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check formatting (same clang-format version as Visual Studio 2022)
+        run: pipx run clang-format==19.1.5 --dry-run --Werror $(git ls-files '*.h' '*.cpp')
