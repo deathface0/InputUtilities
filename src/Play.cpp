@@ -3,7 +3,9 @@
 #include <utility>
 #include <vector>
 
+#include "detail/Coords.h"
 #include "detail/InputBuilders.h"
+#include "detail/Path.h"
 #include "detail/Session.h"
 #include "detail/Text.h"
 
@@ -60,6 +62,7 @@ Status Input::play(const Sequence& sequence) {
 
     std::vector<INPUT> pending;                   // instant events waiting to go in one batch
     std::vector<std::pair<INPUT, INPUT>> pressed; // (press, release) of everything this sequence pressed
+    std::optional<Point> pendingGoal;             // where the pending batch leaves the cursor, if known
 
     const auto queueKey = [&](const Key& key, bool down) {
         pending.push_back(*detail::makeKeyInput(key, mode, !down, backend));
@@ -71,8 +74,12 @@ Status Input::play(const Sequence& sequence) {
     };
     const auto flush = [&]() -> Status {
         if (pending.empty()) return {};
+        // A batch that moves the cursor waits for Windows to apply it, so later steps read the real position.
+        const std::optional<Point> before = pendingGoal ? backend.cursorPos() : std::nullopt;
         const Status status = session_->send(pending);
+        if (status && pendingGoal && before) detail::settleCursor(backend, *pendingGoal, *before);
         pending.clear();
+        pendingGoal.reset();
         return status;
     };
     // On failure, release what this sequence pressed and is still down (never the user's own holds).
@@ -134,7 +141,9 @@ Status Input::play(const Sequence& sequence) {
                 if (const Status status = flush(); !status) return status;
                 return mouse.moveTo(s.target, s.motion);
             }
-            pending.push_back(detail::makeAbsoluteMove(s.target, backend.virtualScreen()));
+            const Rect screen = backend.virtualScreen();
+            pending.push_back(detail::makeAbsoluteMove(s.target, screen));
+            pendingGoal = detail::clampToScreen(s.target, screen);
             return {};
         },
         [&](const steps::MoveBy& s) -> Status {
@@ -147,7 +156,10 @@ Status Input::play(const Sequence& sequence) {
                 if (const Status status = flush(); !status) return status;
                 return mouse.moveRaw(s.dx, s.dy, s.motion);
             }
-            if (s.dx != 0 || s.dy != 0) pending.push_back(detail::makeRelativeMove(s.dx, s.dy));
+            if (s.dx != 0 || s.dy != 0) {
+                pending.push_back(detail::makeRelativeMove(s.dx, s.dy));
+                pendingGoal.reset(); // the final position in pixels is unknown
+            }
             return {};
         },
         [&](const steps::Scroll& s) -> Status {

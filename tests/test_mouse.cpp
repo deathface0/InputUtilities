@@ -90,6 +90,33 @@ TEST_CASE("verifyCursor reports a target that was not reached") {
     CHECK(input.mouse.moveTo({800, 600}) == Error::TargetNotReached);
 }
 
+TEST_CASE("verifyCursor waits for Windows to apply the move") {
+    auto fake = std::make_shared<FakeBackend>();
+    fake->staleReads = 2; // the first reads after a move still show the old position
+    Input input(Config{.verifyCursor = true, .backend = fake});
+
+    CHECK(input.mouse.moveTo({300, 300}));
+    CHECK(input.mouse.moveBy(10, 0, Motion::linear(20ms)));
+    CHECK(fake->cursor == Point{310, 300});
+}
+
+TEST_CASE_FIXTURE(Fixture, "moveBy right after a move starts from where the cursor really is") {
+    fake->staleReads = 1;
+    REQUIRE(input.mouse.moveTo({100, 100}));
+    REQUIRE(input.mouse.moveBy(10, 0));
+    CHECK(fake->cursor == Point{110, 100});
+}
+
+TEST_CASE("a cursor that cannot move is given up on after 25 ms") {
+    auto fake = std::make_shared<FakeBackend>();
+    fake->moveCursor = false;
+    Input input(Config{.verifyCursor = true, .backend = fake});
+
+    const auto start = fake->now();
+    CHECK(input.mouse.moveTo({800, 600}) == Error::TargetNotReached);
+    CHECK(fake->now() - start == 25ms);
+}
+
 TEST_CASE_FIXTURE(Fixture, "moveRaw sends relative steps that add up to the requested distance") {
     fake->cursor = {500, 500};
     REQUIRE(input.mouse.moveRaw(30, -10, Motion::linear(50ms)));

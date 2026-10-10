@@ -52,7 +52,8 @@ public:
 
     /// Relative movement in mickeys, the raw units games read for camera
     /// control. The distance in pixels depends on the pointer speed and
-    /// acceleration settings, so the cursor position is not verified.
+    /// acceleration settings, so the cursor position is not verified, and
+    /// position() may not show the move immediately (Windows applies it late).
     Status moveRaw(int dx, int dy, const Motion& motion = {});
 
     Status down(MouseButton button = MouseButton::Left);

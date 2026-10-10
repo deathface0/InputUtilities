@@ -28,6 +28,7 @@ public:
     inpututil::Rect screen{0, 0, 1920, 1080};
     bool cursorAvailable = true;
     bool moveCursor = true; // false: the cursor ignores moves (a target that is never reached)
+    int staleReads = 0; // reads that still return the old position after a move (Windows applies moves late)
 
     /// How absolute coordinates (0..65535) become pixels. Windows does not
     /// document it; these are the two models seen in practice.
@@ -172,6 +173,10 @@ public:
 
     std::optional<inpututil::Point> cursorPos() override {
         if (!cursorAvailable) return std::nullopt;
+        if (pendingStaleReads > 0) {
+            --pendingStaleReads;
+            return cursorBeforeMove;
+        }
         return cursor;
     }
 
@@ -221,8 +226,13 @@ private:
         return origin + static_cast<int>(n * (extent - 1) / 65535);
     }
 
+    inpututil::Point cursorBeforeMove{};
+    int pendingStaleReads = 0;
+
     void applyMove(const INPUT& in) {
         if (!moveCursor || in.type != INPUT_MOUSE || !(in.mi.dwFlags & MOUSEEVENTF_MOVE)) return;
+        cursorBeforeMove = cursor;
+        pendingStaleReads = staleReads;
         if (in.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) {
             cursor = {toPixel(in.mi.dx, screen.left, screen.width),
                       toPixel(in.mi.dy, screen.top, screen.height)};

@@ -87,4 +87,17 @@ Status playPath(Session& session, Point from, const std::vector<PathStep>& path,
     return {};
 }
 
+void settleCursor(Backend& backend, Point goal, Point previous) {
+    using Duration = Backend::Clock::duration;
+    const auto deadline = backend.now() + std::chrono::duration_cast<Duration>(std::chrono::milliseconds(25));
+    constexpr auto kPoll = std::chrono::duration_cast<Duration>(std::chrono::microseconds(250));
+    while (true) {
+        const auto position = backend.cursorPos();
+        if (!position || *position == goal || *position != previous) return;
+        const auto now = backend.now();
+        if (now >= deadline) return;
+        backend.sleepUntil(std::min(deadline, now + kPoll));
+    }
+}
+
 } // namespace inpututil::detail

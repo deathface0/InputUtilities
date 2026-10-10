@@ -59,8 +59,7 @@ void checkCursor(Input& input, Summary& summary) {
     int ok = 0;
     for (const Point target : targets) {
         const Status status = input.mouse.moveTo(target);
-        std::this_thread::sleep_for(30ms);
-        const auto reached = input.mouse.position();
+        const auto reached = input.mouse.position(); // no pause: moveTo waits for Windows to apply the move
         const bool pass = status && reached && *reached == target;
         ok += pass ? 1 : 0;
         std::printf("  target (%6d, %6d)  reached (%6d, %6d)  %s\n", target.x, target.y,

@@ -97,6 +97,11 @@ TEST_CASE_FIXTURE(Fixture, "mouse steps") {
         REQUIRE(input.play(Sequence{}.moveTo({100, 100}).moveBy(10, 0)));
         CHECK(fake->cursor == Point{110, 100});
     }
+    SUBCASE("moveBy sees the real position even when Windows applies the moveTo late") {
+        fake->staleReads = 1;
+        REQUIRE(input.play(Sequence{}.moveTo({100, 100}).moveBy(10, 0)));
+        CHECK(fake->cursor == Point{110, 100});
+    }
     SUBCASE("moveTo with a motion follows a path") {
         REQUIRE(input.play(Sequence{}.moveTo({200, 0}, Motion::linear(50ms))));
         CHECK(fake->batches.size() == 10);

@@ -59,8 +59,12 @@ Status Mouse::moveAbsolute(Point from, Point target, const Motion& motion) {
 
     auto rng = makeRng(motion);
     const auto path = detail::planPath(from, goal, motion, rng);
+    // Where the cursor is just before the last move, to tell when Windows has applied it.
+    const std::optional<Point> previous =
+        path.size() > 1 ? detail::clampToScreen(path[path.size() - 2].point, screen) : backend.cursorPos();
     const auto absolute = [&screen](Point, Point next) { return detail::makeAbsoluteMove(next, screen); };
     if (const Status status = detail::playPath(*session_, from, path, absolute); !status) return status;
+    if (previous) detail::settleCursor(backend, goal, *previous);
 
     if (verifyCursor_) {
         const auto reached = backend.cursorPos();

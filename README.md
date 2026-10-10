@@ -214,7 +214,8 @@ All system access (injection, cursor, screen, keyboard layout, key state and tim
 - **Elevated windows (UIPI).** Windows silently drops input sent to a process with higher integrity (for example one running as administrator) and `SendInput` reports no error. Run your program at the same level as the target.
 - **Injected input is detectable.** Every event sent through `SendInput` carries the `LLKHF_INJECTED` / `LLMHF_INJECTED` flag, whether it uses virtual keys or scan codes. Anti-cheat software can see it.
 - **DPI scaling.** On scaled displays (125 %, 150 %…) Windows virtualizes coordinates for processes that are not DPI aware. Make your process per-monitor DPI aware to work with real pixels; see `enableDpiAwareness()` in [`examples/ExampleSupport.h`](examples/ExampleSupport.h).
-- **`moveRaw`** moves in mickeys: the distance in pixels depends on the pointer speed and "Enhance pointer precision", so the final position is not verified.
+- **Windows applies injected moves asynchronously**: right after `SendInput` the cursor can still read as the old position for a fraction of a millisecond. `moveTo`, `moveBy`, `drag` and sequence moves wait for the move to be applied, so the next step reads the real position.
+- **`moveRaw`** moves in mickeys: the distance in pixels depends on the pointer speed and "Enhance pointer precision", so the final position is not verified (nor waited for: `position()` right after it may still show the old one).
 - **`TextMode::Keystrokes`** uses the keyboard layout of the foreground window. If you hold a modifier yourself (for example with `hold(Key::Shift)`), it affects the typed text.
 - **The abort key** is read with `GetAsyncKeyState`, which also sees injected keys: a macro that sends its own abort key stops itself.
 - Every event carries `dwExtraInfo = kDefaultExtraInfoTag` (configurable with `Config::extraInfoTag`), so your own hooks can tell it apart from real input.
