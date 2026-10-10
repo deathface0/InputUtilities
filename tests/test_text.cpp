@@ -39,6 +39,14 @@ std::vector<std::pair<WORD, bool>> keysOf(const std::vector<INPUT>& batch) {
 
 using Keys = std::vector<std::pair<WORD, bool>>;
 
+// Fake time between consecutive SendInput calls: the pauses between characters.
+std::vector<FakeBackend::Clock::duration> pausesBetweenBatches(const FakeBackend& fake) {
+    std::vector<FakeBackend::Clock::duration> pauses;
+    for (std::size_t i = 1; i < fake.batchTimes.size(); ++i)
+        pauses.push_back(fake.batchTimes[i] - fake.batchTimes[i - 1]);
+    return pauses;
+}
+
 } // namespace
 
 TEST_CASE_FIXTURE(Fixture, "Unicode mode sends one batch per character") {
@@ -228,9 +236,11 @@ TEST_CASE_FIXTURE(Fixture, "keystrokes follow the keyboard key mode") {
 
 TEST_CASE_FIXTURE(Fixture, "delay pauses between characters but not after the last one") {
     REQUIRE(input.keyboard.type("abc", {.delay = 20ms}));
-    REQUIRE(fake->sleeps.size() == 2);
-    CHECK(fake->sleeps[0] == 20ms);
-    CHECK(fake->sleeps[1] == 20ms);
+    const auto pauses = pausesBetweenBatches(*fake);
+    REQUIRE(pauses.size() == 2);
+    CHECK(pauses[0] == 20ms);
+    CHECK(pauses[1] == 20ms);
+    CHECK(fake->now() == fake->batchTimes.back());
 }
 
 TEST_CASE("jitter is reproducible with a seed and never negative") {
@@ -238,7 +248,7 @@ TEST_CASE("jitter is reproducible with a seed and never negative") {
         auto fake = std::make_shared<FakeBackend>();
         Input input(Config{.backend = fake});
         REQUIRE(input.keyboard.type("abcdefghij", options));
-        return fake->sleeps;
+        return pausesBetweenBatches(*fake);
     };
 
     const auto first = run({.delay = 30ms, .jitter = 10ms, .seed = 42});
@@ -253,7 +263,7 @@ TEST_CASE("jitter is reproducible with a seed and never negative") {
     CHECK(std::adjacent_find(first.begin(), first.end(), std::not_equal_to<>()) != first.end());
 
     for (const auto pause : run({.delay = 5ms, .jitter = 20ms, .seed = 7})) {
-        CHECK(pause > 0ms);
+        CHECK(pause >= 0ms); // a negative draw becomes no pause at all
         CHECK(pause <= 25ms);
     }
 }

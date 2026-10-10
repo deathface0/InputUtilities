@@ -61,17 +61,23 @@ public:
     /// Virtual key that aborts long operations (0 = none). Safe to call from any thread.
     void setAbortVk(std::uint16_t vk) noexcept { abortVk_.store(vk); }
 
-    /// If the abort key is down: releases everything and returns Aborted.
+    /// Abort requested from code: holds until cleared. Safe to call from any thread.
+    void requestAbort() noexcept { abortRequested_.store(true); }
+    void clearAbortRequest() noexcept { abortRequested_.store(false); }
+    bool abortRequested() const noexcept { return abortRequested_.load(); }
+
+    /// If an abort was requested or the abort key is down: releases everything
+    /// and returns Aborted.
     Status checkAbort();
 
     /// Waits until the deadline on the backend clock. The single waiting point
-    /// of the library: with an abort key it polls the key every 10 ms and
-    /// returns Aborted when it goes down. A deadline that already passed
-    /// returns at once, after checking the abort key.
+    /// of the library: it checks for an abort every 10 ms and returns Aborted
+    /// as soon as there is one. A deadline that already passed returns at
+    /// once, after one check.
     Status waitUntil(Backend::Clock::time_point deadline);
 
     /// Waits for the duration on the backend clock. A zero or negative
-    /// duration only checks the abort key.
+    /// duration only checks for an abort.
     Status wait(std::chrono::nanoseconds duration);
 
 private:
@@ -91,6 +97,7 @@ private:
     std::uintptr_t extraInfoTag_;
 
     std::atomic<std::uint16_t> abortVk_{0};
+    std::atomic<bool> abortRequested_{false};
 
     mutable std::timed_mutex mutex_;
     std::vector<HeldInput> held_; // in press order

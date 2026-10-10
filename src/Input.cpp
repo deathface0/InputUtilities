@@ -57,6 +57,16 @@ Status Input::sendRaw(std::span<const tagINPUT> events) {
 
 std::size_t Input::heldCount() const { return session_ ? session_->heldCount() : 0; }
 
+void Input::requestAbort() {
+    if (session_) session_->requestAbort();
+}
+
+void Input::clearAbortRequest() {
+    if (session_) session_->clearAbortRequest();
+}
+
+bool Input::abortRequested() const { return session_ && session_->abortRequested(); }
+
 void Input::setAbortKey(std::optional<Key> key) {
     if (!session_) return;
     const auto resolved = key ? detail::resolveKey(*key, session_->backend()) : std::nullopt;

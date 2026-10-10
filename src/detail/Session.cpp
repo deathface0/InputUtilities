@@ -130,18 +130,14 @@ bool Session::isHeldLocked(std::uint32_t id) const {
 
 Status Session::checkAbort() {
     const std::uint16_t vk = abortVk_.load();
-    if (vk == 0 || !backend_->isKeyDown(vk)) return {};
+    if (!abortRequested_.load() && (vk == 0 || !backend_->isKeyDown(vk))) return {};
     releaseAll();
     return Error::Aborted;
 }
 
 Status Session::waitUntil(Backend::Clock::time_point deadline) {
-    if (abortVk_.load() == 0) {
-        if (deadline > backend_->now()) backend_->sleepUntil(deadline);
-        return {};
-    }
-
-    // With an abort key: check it at least once, even when already late.
+    // Checked at least once, even when already late, and every 10 ms while waiting:
+    // an abort can come from the key or from another thread at any time.
     constexpr auto kPollInterval = std::chrono::milliseconds(10);
     while (true) {
         if (const Status status = checkAbort(); !status) return status;

@@ -190,6 +190,17 @@ No exceptions are thrown, except `std::bad_alloc` when memory runs out.
 
 With `Config::abortKey`, every operation that takes time (motions, holds, typing, timed clicks and scrolls, sequence waits) checks the key every 10 ms. When it goes down, everything held is released and the operation returns `Error::Aborted`. Instant actions are not affected. It can be changed at any time with `input.setAbortKey(...)`.
 
+The same stop can come from code, for example a "Stop" button running on another thread. `input.requestAbort()` makes every operation that takes time release everything and return `Error::Aborted` until `input.clearAbortRequest()`, so a loop of macros stops even if it does not check each result:
+
+```cpp
+// GUI thread
+void onStopClicked() { input.requestAbort(); }
+void onStartClicked() { input.clearAbortRequest(); startMacroThread(); }
+
+// macro thread
+while (input.play(farmRoute)) {}               // ends with Error::Aborted when Stop is clicked
+```
+
 ### Emergency release
 
 ```cpp

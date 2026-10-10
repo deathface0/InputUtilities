@@ -89,6 +89,18 @@ public:
 
     /// Changes or removes the abort key; safe to call from any thread.
     void setAbortKey(std::optional<Key> key);
+
+    /// Stops long operations from code, like the abort key does (e.g. a GUI
+    /// "Stop" button): from now on every operation that takes time releases
+    /// everything and returns Error::Aborted, until clearAbortRequest().
+    /// Instant actions are not affected. Safe to call from any thread.
+    void requestAbort();
+
+    /// Lets long operations run again after requestAbort().
+    void clearAbortRequest();
+
+    /// Whether an abort has been requested and not cleared yet.
+    bool abortRequested() const;
 };
 
 } // namespace inpututil

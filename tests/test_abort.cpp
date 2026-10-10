@@ -3,6 +3,7 @@
 #include "FakeBackend.h"
 
 #include <algorithm>
+#include <functional>
 
 #include <inpututil/inpututil.h>
 
@@ -25,12 +26,13 @@ struct Fixture {
     void pressF12After(std::chrono::milliseconds delay) { fake->pressedFrom[VK_F12] = fake->now() + delay; }
 };
 
-// Presses F12 right after a number of sends, without the fake clock moving.
-struct PressF12AfterSends : FakeBackend {
+// Runs an action right after a number of sends, without the fake clock moving.
+struct ActAfterSends : FakeBackend {
     std::size_t sends = 0;
+    std::function<void()> action;
     unsigned sendInput(std::span<const tagINPUT> inputs) override {
         const unsigned accepted = FakeBackend::sendInput(inputs);
-        if (batches.size() == sends) keysDown.insert(VK_F12);
+        if (batches.size() == sends && action) action();
         return accepted;
     }
 };
@@ -59,13 +61,65 @@ TEST_CASE_FIXTURE(Fixture, "a long movement stops when the abort key goes down")
 }
 
 TEST_CASE("the abort key is checked even when a movement runs late") {
-    auto fake = std::make_shared<PressF12AfterSends>();
+    auto fake = std::make_shared<ActAfterSends>();
     fake->sends = 3;
+    fake->action = [backend = fake.get()] { backend->keysDown.insert(VK_F12); };
     fake->sleepOvershoot = 1s; // after the first step, every deadline has already passed
     Input input(Config{.abortKey = Key::F12, .backend = fake});
 
     CHECK(input.mouse.moveTo({1000, 0}, Motion::linear(100ms)) == Error::Aborted);
     CHECK(fake->batches.size() == 3);
+    CHECK(input.heldCount() == 0);
+}
+
+TEST_CASE("requestAbort stops a running operation") {
+    auto fake = std::make_shared<ActAfterSends>();
+    fake->loadUsLayout();
+    Input input(Config{.backend = fake}); // no abort key: only the request
+    fake->sends = 3;
+    fake->action = [&input] { input.requestAbort(); }; // e.g. a "Stop" button on another thread
+
+    CHECK(input.keyboard.type("abcdef", {.delay = 50ms}) == Error::Aborted);
+    CHECK(fake->batches.size() == 3);
+    CHECK(input.abortRequested());
+}
+
+TEST_CASE("an abort request lasts until it is cleared") {
+    auto fake = FakeBackend::withUsLayout();
+    Input input(Config{.backend = fake});
+    CHECK_FALSE(input.abortRequested());
+
+    input.requestAbort();
+    CHECK(input.abortRequested());
+    CHECK(input.mouse.moveTo({100, 0}, Motion::linear(50ms)) == Error::Aborted);
+    CHECK(input.play(Sequence{}.wait(10ms)) == Error::Aborted);
+    CHECK(input.keyboard.tap(Key::A, 20ms) == Error::Aborted);
+    CHECK(input.heldCount() == 0);
+
+    // Instant actions are not affected.
+    CHECK(input.keyboard.tap(Key::A));
+    CHECK(input.mouse.click());
+
+    input.clearAbortRequest();
+    CHECK_FALSE(input.abortRequested());
+    CHECK(input.mouse.moveTo({100, 0}, Motion::linear(50ms)));
+    CHECK(fake->cursor == Point{100, 0});
+
+    Input moved = std::move(input);
+    input.requestAbort(); // a moved-from Input ignores it
+    CHECK_FALSE(input.abortRequested());
+    CHECK_FALSE(moved.abortRequested());
+}
+
+TEST_CASE("a requested abort releases what is held at the next long operation") {
+    auto fake = FakeBackend::withUsLayout();
+    Input input(Config{.backend = fake});
+    auto shift = input.keyboard.hold(Key::Shift);
+    REQUIRE(input.mouse.down());
+
+    input.requestAbort();
+    CHECK(input.heldCount() == 2); // nothing is sent until an operation checks
+    CHECK(input.mouse.moveTo({50, 0}, Motion::linear(20ms)) == Error::Aborted);
     CHECK(input.heldCount() == 0);
 }
 
