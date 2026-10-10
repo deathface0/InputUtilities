@@ -52,6 +52,10 @@ public:
     Keyboard& operator=(const Keyboard&) = delete;
 
     Status down(Key key);
+
+    /// Always sent, even for a key this library did not press. The key is
+    /// resolved again with the current layout: if it changed since down(), use
+    /// a Hold, which keeps the exact release events.
     Status up(Key key);
 
     /// Presses and releases the key. Without `hold` both events go in a single
@@ -80,6 +84,8 @@ public:
     bool isHeld(Key key) const;
 
     KeyMode mode() const noexcept { return mode_; }
+
+    /// Not synchronized: do not call it while another thread uses this keyboard.
     void setMode(KeyMode mode) noexcept { mode_ = mode; }
 
 private:

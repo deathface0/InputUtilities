@@ -40,6 +40,7 @@ private:
     friend class Mouse;
 
     Hold(std::function<Status()> release, Status status) noexcept;
+    void releaseQuietly() noexcept;
 
     std::function<Status()> release_;
     Status status_;

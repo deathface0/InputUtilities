@@ -27,7 +27,7 @@ else()
         $<$<BOOL:${INPUTUTIL_WARNINGS_AS_ERRORS}>:-Werror>)
 endif()
 
-add_library(inpututil
+add_library(inpututil STATIC
     src/EmergencyRelease.cpp
     src/Hold.cpp
     src/Input.cpp

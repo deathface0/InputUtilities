@@ -13,8 +13,21 @@ Input::Input(Config config)
     setAbortKey(config.abortKey);
 }
 
+namespace {
+
+// Releases from a destructor or a noexcept assignment, where an exception
+// (std::bad_alloc, a mutex error) would terminate the program.
+void releaseQuietly(detail::Session& session) noexcept {
+    try {
+        session.releaseAll();
+    } catch (...) {
+    }
+}
+
+} // namespace
+
 Input::~Input() {
-    if (session_ && releaseOnDestroy_) session_->releaseAll();
+    if (session_ && releaseOnDestroy_) releaseQuietly(*session_);
 }
 
 // Keyboard and Mouse keep pointing at the same Session, now owned by this Input.
@@ -22,7 +35,7 @@ Input::Input(Input&&) noexcept = default;
 
 Input& Input::operator=(Input&& other) noexcept {
     if (this != &other) {
-        if (session_ && releaseOnDestroy_) session_->releaseAll();
+        if (session_ && releaseOnDestroy_) releaseQuietly(*session_);
         session_ = std::move(other.session_);
         releaseOnDestroy_ = other.releaseOnDestroy_;
         keyboard = std::move(other.keyboard);

@@ -12,14 +12,23 @@ Hold::Hold(Hold&& other) noexcept
 
 Hold& Hold::operator=(Hold&& other) noexcept {
     if (this != &other) {
-        release();
+        releaseQuietly();
         release_ = std::exchange(other.release_, nullptr);
         status_ = other.status_;
     }
     return *this;
 }
 
-Hold::~Hold() { release(); }
+Hold::~Hold() { releaseQuietly(); }
+
+// From a destructor or a noexcept assignment an exception (std::bad_alloc, a
+// mutex error) would terminate the program.
+void Hold::releaseQuietly() noexcept {
+    try {
+        release();
+    } catch (...) {
+    }
+}
 
 Status Hold::release() {
     if (!release_) return {};

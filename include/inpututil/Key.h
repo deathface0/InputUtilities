@@ -26,10 +26,13 @@ public:
     static constexpr Key fromVk(std::uint16_t vk) noexcept { return {Kind::Vk, vk, false}; }
 
     /// Physical key. Pass extended = true for keys sent with the 0xE0 prefix
-    /// (right Ctrl/Alt, arrows, Insert, Delete, Home, End, PageUp/Down...).
+    /// (right Ctrl/Alt, arrows, Insert, Delete, Home, End, PageUp/Down...), or
+    /// include the prefix in the code (0xE04B). Any other prefix (0xE1 is the
+    /// multi-byte Pause sequence) gives an invalid key: use Key::Pause.
     static constexpr Key fromScanCode(std::uint16_t scanCode, bool extended = false) noexcept {
-        return {Kind::Scan, static_cast<std::uint16_t>(scanCode & 0xFF),
-                extended || (scanCode & 0xFF00) == 0xE000};
+        const auto prefix = scanCode & 0xFF00;
+        if (prefix != 0 && prefix != 0xE000) return {};
+        return {Kind::Scan, static_cast<std::uint16_t>(scanCode & 0xFF), extended || prefix == 0xE000};
     }
 
     /// Key from its name: "Ctrl", "f5", "PgUp", "AltGr", "+", ... (case
@@ -38,7 +41,7 @@ public:
 
     /// Name of the matching Key constant ("Ctrl", "F5", "Digit7", "RAlt"), or
     /// the raw form ("vk:0xE9", "sc:0x76") for keys without one.
-    /// Key::parse(k.name()) == k always holds.
+    /// Key::parse(k.name()) == k holds for every valid key; an invalid key has an empty name.
     std::string name() const;
 
     constexpr bool valid() const noexcept { return kind_ != Kind::None && code_ != 0; }
@@ -83,7 +86,7 @@ struct KeyCombo {
     /// name is unknown, a key repeats or the text is empty or ends with '+'.
     static std::optional<KeyCombo> parse(std::string_view text);
 
-    /// Key names joined with '+'; KeyCombo::parse(c.toString()) == c.
+    /// Key names joined with '+'; KeyCombo::parse(c.toString()) == c when every key is valid.
     std::string toString() const;
 
     friend bool operator==(const KeyCombo&, const KeyCombo&) = default;

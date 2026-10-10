@@ -10,7 +10,8 @@ namespace inpututil {
 ///   - std::exit() (locals are not destroyed),
 ///   - closing the console, Ctrl+C, Ctrl+Break, logoff and shutdown.
 /// Previously installed handlers are chained, not replaced. Calling it more
-/// than once does nothing. It releases regardless of Config::releaseOnDestroy.
+/// than once does nothing. It releases regardless of Config::releaseOnDestroy,
+/// also when main() returns normally (the std::exit handler runs then too).
 ///
 /// Nothing can run when the process is killed (TerminateProcess, Task
 /// Manager, taskkill /F); use Config::abortKey to stop a runaway macro instead.

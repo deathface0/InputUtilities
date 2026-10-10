@@ -36,6 +36,12 @@ TEST_CASE("keys created from scan codes keep their physical position") {
     CHECK_FALSE(w.extended());
 
     CHECK(Key::fromScanCode(0xE04B) == Key::fromScanCode(0x4B, true));
+    CHECK(Key::fromScanCode(0xE01D).extended()); // right Ctrl
+
+    // Pause is the multi-byte E1 1D sequence: no single scan code, and never left Ctrl (1D).
+    CHECK_FALSE(Key::fromScanCode(0xE11D).valid());
+    CHECK_FALSE(Key::fromScanCode(0xE11D, true).valid());
+    CHECK_FALSE(Key::fromScanCode(0x121D).valid());
     CHECK(Key::NumpadEnter.scanCode() == 0x1C);
     CHECK(Key::NumpadEnter.extended());
 }
