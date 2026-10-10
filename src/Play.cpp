@@ -47,19 +47,22 @@ Status validate(const detail::SequenceStep& step, KeyMode mode, Backend& backend
 
 } // namespace
 
-Status Input::play(const Sequence& sequence) {
+Progress Input::play(const Sequence& sequence) {
     if (!session_) return Error::InvalidArgument;
     Backend& backend = session_->backend();
     const KeyMode mode = keyboard.mode();
+    const auto& steps = sequence.steps_;
 
-    for (const auto& step : sequence.steps_)
-        if (const Status status = validate(step, mode, backend); !status) return status;
+    for (std::size_t i = 0; i < steps.size(); ++i)
+        if (const Status status = validate(steps[i], mode, backend); !status) return {status, 0, i};
 
-    // A held abort key stops the sequence before it starts.
-    if (!sequence.empty())
-        if (const Status status = session_->checkAbort(); !status) return status;
+    // A held abort key (or a pending abort request) stops the sequence before it starts.
+    if (!steps.empty())
+        if (const Status status = session_->checkAbort(); !status) return {status, 0, 0};
 
     std::vector<INPUT> pending;       // instant events waiting to go in one batch
+    std::size_t batchStart = 0;       // first step whose events are in `pending`
+    bool batchFailed = false;         // the last flush was rejected
     std::vector<INPUT> releases;      // release of everything this sequence pressed, last first
     std::optional<Point> pendingGoal; // where the pending batch leaves the cursor, if known
 
@@ -77,14 +80,17 @@ Status Input::play(const Sequence& sequence) {
         const std::optional<Point> before = pendingGoal ? backend.cursorPos() : std::nullopt;
         const Status status = session_->send(pending);
         if (status && pendingGoal && before) detail::settleCursor(backend, *pendingGoal, *before);
+        batchFailed = !status;
         pending.clear();
         pendingGoal.reset();
         return status;
     };
     // On failure, release what this sequence pressed and is still down (never the user's own holds).
-    const auto fail = [&](Status status) {
+    // A rejected batch is blamed on its first step, which may have been sent only in part.
+    const auto fail = [&](Status status, std::size_t step) -> Progress {
         session_->release(releases);
-        return status;
+        const std::size_t failedAt = batchFailed ? batchStart : step;
+        return {status, failedAt, failedAt};
     };
 
     const auto zero = std::chrono::milliseconds::zero();
@@ -174,11 +180,13 @@ Status Input::play(const Sequence& sequence) {
         },
     };
 
-    for (const auto& step : sequence.steps_)
-        if (const Status status = std::visit(run, step); !status) return fail(status);
+    for (std::size_t i = 0; i < steps.size(); ++i) {
+        if (pending.empty()) batchStart = i;
+        if (const Status status = std::visit(run, steps[i]); !status) return fail(status, i);
+    }
 
-    if (const Status status = flush(); !status) return fail(status);
-    return {};
+    if (const Status status = flush(); !status) return fail(status, batchStart);
+    return {{}, steps.size()};
 }
 
 } // namespace inpututil

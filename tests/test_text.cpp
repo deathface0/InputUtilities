@@ -288,3 +288,23 @@ TEST_CASE_FIXTURE(Fixture, "empty text and a moved-from Input") {
     CHECK(input.keyboard.type("x") == Error::InvalidArgument);
     CHECK(other.keyboard.type("x"));
 }
+
+TEST_CASE_FIXTURE(Fixture, "type reports how many characters it typed") {
+    const auto done = input.keyboard.type("abcd");
+    CHECK(done);
+    CHECK(done.completed() == 4);
+    CHECK_FALSE(done.failedAt());
+
+    fake->rejectAfter = fake->batchTimes.size() + 2; // the third character is rejected
+    const auto rejected = input.keyboard.type("abcd");
+    CHECK(rejected == Error::SystemFailure);
+    CHECK(rejected.completed() == 2);
+    CHECK(rejected.failedAt() == 2u);
+    fake->rejectAfter.reset();
+
+    // Validation fails before anything is sent: "\r\n" and an emoji count as one character each.
+    const auto invalid = input.keyboard.type(u8"a\r\n😀\x01");
+    CHECK(invalid == Error::InvalidArgument);
+    CHECK(invalid.completed() == 0);
+    CHECK(invalid.failedAt() == 3u);
+}

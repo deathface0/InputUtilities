@@ -15,6 +15,7 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     const Key key = Key::A;
     const KeyMode mode = KeyMode::ScanCode;
     const Status status = Error::None;
+    const Progress progress{status, 3};
     const Point point{1, 2};
     const Rect rect{0, 0, 10, 10};
     const Backend* backend = nullptr;
@@ -35,6 +36,7 @@ TEST_CASE("public types are usable next to windows.h with using namespace") {
     CHECK(key.valid());
     CHECK(mode == KeyMode::ScanCode);
     CHECK(status.ok());
+    CHECK(progress.completed() == 3);
     CHECK(rect.contains(point));
     CHECK(backend == nullptr);
     CHECK(config.releaseOnDestroy);

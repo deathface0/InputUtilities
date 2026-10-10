@@ -184,6 +184,17 @@ if (Status st = input.mouse.moveTo({100, 100}); !st) {
 }
 ```
 
+`keyboard.type()` and `input.play()` return a `Progress`: a `Status` that also tells how far they got. `completed()` is the number of characters typed or steps done (enough to resume the rest later), and `failedAt()` the character or step that failed, including an invalid step rejected before anything was sent:
+
+```cpp
+if (Progress p = input.play(macro); !p && p.failedAt())
+    std::printf("step %zu failed: %s\n", *p.failedAt(), p.message().c_str());
+
+const std::u8string_view text = u8"A long text...";
+if (Progress p = input.keyboard.type(text, {.delay = 50ms}); p == Error::Aborted)
+    remaining = text.substr(p.completed()); // one character per byte: ASCII without "\r\n"
+```
+
 No exceptions are thrown, except `std::bad_alloc` when memory runs out.
 
 ### Stopping a runaway macro

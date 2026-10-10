@@ -118,6 +118,42 @@ TEST_CASE_FIXTURE(Fixture, "mouse steps") {
     }
 }
 
+TEST_CASE_FIXTURE(Fixture, "play reports which step failed") {
+    SUBCASE("success: every step completed") {
+        const Sequence sequence = Sequence{}.tap(Key::A).wait(10ms).tap(Key::B);
+        const auto done = input.play(sequence);
+        CHECK(done);
+        CHECK(done.completed() == sequence.size());
+        CHECK_FALSE(done.failedAt());
+    }
+    SUBCASE("an invalid step is found before anything is sent") {
+        const auto invalid = input.play(Sequence{}.tap(Key::A).wait(10ms).press("Ctrl+foo"));
+        CHECK(invalid == Error::InvalidArgument);
+        CHECK(invalid.failedAt() == 2u);
+        CHECK(invalid.completed() == 0);
+    }
+    SUBCASE("a step rejected while running") {
+        fake->rejectAfter = 1; // the first batch gets through, the second does not
+        const auto rejected = input.play(Sequence{}.tap(Key::A).wait(10ms).tap(Key::B).wait(10ms));
+        CHECK(rejected == Error::SystemFailure);
+        CHECK(rejected.failedAt() == 2u);
+        CHECK(rejected.completed() == 2);
+    }
+    SUBCASE("a rejected batch is blamed on its first step") {
+        fake->acceptLimit = 0;
+        const auto rejected = input.play(Sequence{}.wait(5ms).tap(Key::A).tap(Key::B).wait(10ms));
+        CHECK(rejected == Error::SystemFailure);
+        CHECK(rejected.failedAt() == 1u);
+        CHECK(rejected.completed() == 1);
+    }
+    SUBCASE("an abort requested before it starts") {
+        input.requestAbort();
+        const auto aborted = input.play(Sequence{}.tap(Key::A).wait(10ms));
+        CHECK(aborted == Error::Aborted);
+        CHECK(aborted.failedAt() == 0u);
+    }
+}
+
 TEST_CASE_FIXTURE(Fixture, "a failure midway releases what the sequence pressed") {
     fake->acceptLimit = 2;
     CHECK(input.play(Sequence{}.down(Key::Shift).wait(10ms).press("Ctrl+C")) == Error::PartialSend);

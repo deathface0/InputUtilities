@@ -75,25 +75,25 @@ Hold Keyboard::hold(std::string_view combo) {
     return hold(*parsed);
 }
 
-Status Keyboard::type(std::string_view utf8, const TypeOptions& options) {
+Progress Keyboard::type(std::string_view utf8, const TypeOptions& options) {
     if (!session_) return Error::InvalidArgument;
     const auto text = detail::utf8ToUtf16(utf8);
     if (!text) return Error::InvalidArgument;
     return type(std::wstring_view(*text), options);
 }
 
-Status Keyboard::type(std::u8string_view text, const TypeOptions& options) {
+Progress Keyboard::type(std::u8string_view text, const TypeOptions& options) {
     return type(std::string_view(reinterpret_cast<const char*>(text.data()), text.size()), options);
 }
 
-Status Keyboard::type(std::wstring_view text, const TypeOptions& options) {
+Progress Keyboard::type(std::wstring_view text, const TypeOptions& options) {
     if (!session_) return Error::InvalidArgument;
 
     std::vector<detail::InputGroup> groups;
     if (const Status status = detail::buildTextGroups(text, options.mode, options.fallbackToUnicode, mode_,
                                                       session_->backend(), groups);
         !status)
-        return status;
+        return {status, 0, groups.size()}; // groups holds the characters before the invalid one
 
     std::optional<std::mt19937> rng;
     if (options.jitter > std::chrono::milliseconds::zero())
@@ -110,7 +110,7 @@ Status Keyboard::type(std::wstring_view text, const TypeOptions& options) {
                     std::uniform_int_distribution<long long>(-jitter, jitter)(*rng));
             }
         }
-        if (const Status status = session_->wait(pause); !status) return status;
+        if (const Status status = session_->wait(pause); !status) return {status, i, i};
 
         if (const Status status = session_->send(groups[i]); !status) {
             // Release whatever this character pressed (its modifiers included).
@@ -122,10 +122,10 @@ Status Keyboard::type(std::wstring_view text, const TypeOptions& options) {
                 ups.insert(ups.begin(), up);
             }
             session_->release(ups);
-            return status;
+            return {status, i, i};
         }
     }
-    return {};
+    return {{}, groups.size()};
 }
 
 bool Keyboard::isHeld(Key key) const {

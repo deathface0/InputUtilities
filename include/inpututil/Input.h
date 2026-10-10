@@ -76,8 +76,10 @@ public:
 
     /// Plays a Sequence. Every step is validated first: a bad step fails the
     /// call before anything is sent. If a step fails midway, whatever the
-    /// sequence pressed is released and the error is returned.
-    Status play(const Sequence& sequence);
+    /// sequence pressed is released and the error is returned. failedAt() is
+    /// the index of the step that failed (invalid, rejected or aborted) and
+    /// completed() the number of steps fully done before it.
+    Progress play(const Sequence& sequence);
 
     /// Sends raw Win32 INPUT events (include <windows.h> to build them) in one
     /// batch. Keys and buttons pressed this way are tracked like any other, so

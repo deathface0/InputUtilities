@@ -30,3 +30,27 @@ TEST_CASE("every error has a name") {
     CHECK(inpututil::errorName(Error::TargetNotReached) == "TargetNotReached");
     CHECK(inpututil::errorName(Error::Aborted) == "Aborted");
 }
+
+TEST_CASE("Progress is a Status that also tells how far an operation got") {
+    using inpututil::Progress;
+
+    const Progress done{Status{}, 4};
+    CHECK(done);
+    CHECK(done.completed() == 4);
+    CHECK_FALSE(done.failedAt());
+
+    const Progress failed{Status{Error::PartialSend, 5}, 2, 2};
+    CHECK_FALSE(failed);
+    CHECK(failed == Error::PartialSend);
+    CHECK(failed.win32Error() == 5);
+    CHECK(failed.completed() == 2);
+    CHECK(failed.failedAt() == 2u);
+
+    const Progress fromError = Error::InvalidArgument;
+    CHECK(fromError == Error::InvalidArgument);
+    CHECK(fromError.completed() == 0);
+    CHECK_FALSE(fromError.failedAt());
+
+    const Status plain = failed; // usable wherever a Status is expected
+    CHECK(plain == Error::PartialSend);
+}

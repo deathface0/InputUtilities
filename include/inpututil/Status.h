@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -46,6 +48,32 @@ public:
 private:
     Error error_ = Error::None;
     std::uint32_t win32Error_ = 0;
+};
+
+/// A Status plus how far an operation made of parts got: the characters of
+/// Keyboard::type() or the steps of Input::play().
+///
+///     if (Progress p = input.play(macro); !p && p.failedAt())
+///         std::printf("step %zu failed: %s\n", *p.failedAt(), p.message().c_str());
+class Progress : public Status {
+public:
+    constexpr Progress(Status status = {}, std::size_t completed = 0, // NOLINT: implicit by design
+                       std::optional<std::size_t> failedAt = std::nullopt) noexcept
+        : Status(status), completed_(completed), failedAt_(failedAt) {}
+    constexpr Progress(Error error) noexcept : Progress(Status(error)) {} // NOLINT: implicit by design
+
+    /// Parts sent completely; all of them on success.
+    constexpr std::size_t completed() const noexcept { return completed_; }
+
+    /// The part that made it fail: an invalid one found before anything was
+    /// sent (then completed() is 0), or the one being sent or waited for when
+    /// it failed or was aborted. Empty on success and for failures not tied to
+    /// a part (a moved-from object, text that is not valid UTF-8).
+    constexpr std::optional<std::size_t> failedAt() const noexcept { return failedAt_; }
+
+private:
+    std::size_t completed_ = 0;
+    std::optional<std::size_t> failedAt_;
 };
 
 } // namespace inpututil

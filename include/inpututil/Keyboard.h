@@ -76,9 +76,12 @@ public:
     /// Types text, one character per batch. "\n", "\r\n" and "\r" press Enter,
     /// "\t" presses Tab. Invalid text (bad UTF-8, unpaired surrogates, other
     /// control characters) fails with InvalidArgument before anything is sent.
-    Status type(std::string_view utf8, const TypeOptions& options = {});
-    Status type(std::wstring_view text, const TypeOptions& options = {});
-    Status type(std::u8string_view text, const TypeOptions& options = {});
+    /// completed() tells how many characters were typed, counting an emoji or
+    /// "\r\n" as one, so the rest can be typed later; failedAt() is the
+    /// character that failed or was aborted.
+    Progress type(std::string_view utf8, const TypeOptions& options = {});
+    Progress type(std::wstring_view text, const TypeOptions& options = {});
+    Progress type(std::u8string_view text, const TypeOptions& options = {});
 
     /// Whether this library currently holds the key down.
     bool isHeld(Key key) const;
