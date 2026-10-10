@@ -18,7 +18,8 @@ class Session;
 /// How Keyboard::type() produces the characters.
 enum class TextMode : std::uint8_t {
     Unicode,    ///< KEYEVENTF_UNICODE: any character, independent of the keyboard layout.
-    Keystrokes, ///< The real keys of the active layout (with Shift/AltGr), for apps that ignore Unicode.
+    Keystrokes, ///< The real keys of the active layout (with Shift/AltGr), for apps that ignore
+                ///< Unicode. See TypeOptions::fallbackToUnicode for characters without a single key.
 };
 
 struct TypeOptions {
@@ -31,8 +32,9 @@ struct TypeOptions {
     /// (the pause never goes below zero).
     std::chrono::milliseconds jitter{0};
 
-    /// Keystrokes mode: send characters without a key (and emoji) as Unicode.
-    /// When false, such a character fails the whole call with UnmappableCharacter.
+    /// Keystrokes mode: send characters without a single key (no key, a dead
+    /// key such as ^ or ´, or an emoji) as Unicode. When false, such a
+    /// character fails the whole call with UnmappableCharacter.
     bool fallbackToUnicode = true;
 
     /// Seed of the jitter; 0 picks a random one, any other value is reproducible.
@@ -68,8 +70,8 @@ public:
     Hold hold(std::string_view combo);
 
     /// Types text, one character per batch. "\n", "\r\n" and "\r" press Enter,
-    /// "\t" presses Tab. Invalid text (bad UTF-8, unpaired surrogates) fails
-    /// with InvalidArgument before anything is sent.
+    /// "\t" presses Tab. Invalid text (bad UTF-8, unpaired surrogates, other
+    /// control characters) fails with InvalidArgument before anything is sent.
     Status type(std::string_view utf8, const TypeOptions& options = {});
     Status type(std::wstring_view text, const TypeOptions& options = {});
     Status type(std::u8string_view text, const TypeOptions& options = {});

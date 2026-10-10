@@ -21,8 +21,9 @@ using InputGroup = std::vector<INPUT>;
 
 /// Builds one group per typed character. Line breaks become Enter and tabs
 /// Tab. Fails before anything is sent: InvalidArgument for unpaired UTF-16
-/// surrogates, UnmappableCharacter for a character without a key when
-/// Keystrokes mode may not fall back to Unicode.
+/// surrogates and other control characters, UnmappableCharacter for a
+/// character without a single key (none, or a dead key) when Keystrokes mode
+/// may not fall back to Unicode.
 Status buildTextGroups(std::wstring_view text, TextMode mode, bool fallbackToUnicode, KeyMode keyMode,
                        Backend& backend, std::vector<InputGroup>& groups);
 

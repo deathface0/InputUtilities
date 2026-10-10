@@ -78,6 +78,21 @@ public:
         return static_cast<std::uint16_t>(MapVirtualKeyExW(scanCode, MAPVK_VSC_TO_VK_EX, foregroundLayout()));
     }
 
+    bool isDeadKey(std::uint16_t vk, unsigned modifiers) override {
+        BYTE state[256] = {};
+        const auto press = [&state](int generic, int specific) { state[generic] = state[specific] = 0x80; };
+        if (modifiers & 1) press(VK_SHIFT, VK_LSHIFT);
+        if (modifiers & 2) press(VK_CONTROL, VK_LCONTROL);
+        if (modifiers & 4) press(VK_MENU, VK_RMENU); // with Ctrl: AltGr
+
+        const HKL layout = foregroundLayout();
+        const UINT scan = MapVirtualKeyExW(vk, MAPVK_VK_TO_VSC, layout);
+        wchar_t buffer[8];
+        // Flag 0x4 (Windows 10 1607+) leaves the kernel's dead-key state alone,
+        // so a dead key the user is typing at the same time is not disturbed.
+        return ToUnicodeEx(vk, scan, state, buffer, 8, 0x4, layout) < 0;
+    }
+
     bool isKeyDown(std::uint16_t vk) override { return (GetAsyncKeyState(vk) & 0x8000) != 0; }
 
     bool isKeyToggled(std::uint16_t vk) override { return (GetKeyState(vk) & 1) != 0; }

@@ -53,6 +53,11 @@ public:
     /// MAPVK_VSC_TO_VK_EX semantics (accepts the 0xE0 prefix), 0 if unknown.
     virtual std::uint16_t scanCodeToVk(std::uint16_t scanCode) = 0;
 
+    /// Whether the virtual key with these modifiers (VkKeyScanEx bits: 1 Shift,
+    /// 2 Ctrl, 4 Alt) is a dead key: it types nothing on its own and combines
+    /// with the next character (^ ` ´ ¨ ~ on many European layouts).
+    virtual bool isDeadKey(std::uint16_t vk, unsigned modifiers) = 0;
+
     // --- Key state -------------------------------------------------------
 
     /// Whether the key is currently down (GetAsyncKeyState).

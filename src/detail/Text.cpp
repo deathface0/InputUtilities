@@ -39,7 +39,7 @@ std::optional<InputGroup> keyTapGroup(Key key, KeyMode mode, Backend& backend) {
 }
 
 // The real keys of the active layout for a BMP character, wrapped in the
-// modifiers it needs. nullopt if the layout has no key for it.
+// modifiers it needs. nullopt if the layout has no single key for it.
 std::optional<InputGroup> keystrokeGroup(wchar_t ch, KeyMode mode, Backend& backend) {
     const std::int16_t scan = backend.vkKeyScan(ch);
     if (scan == -1) return std::nullopt;
@@ -48,6 +48,8 @@ std::optional<InputGroup> keystrokeGroup(wchar_t ch, KeyMode mode, Backend& back
     unsigned modifiers = (static_cast<std::uint16_t>(scan) >> 8) & 0xFF;
     // No key, or modifiers beyond Shift/Ctrl/Alt (Kana, ...).
     if (vk == 0 || vk == 0xFF || (modifiers & ~(kShift | kCtrl | kAlt)) != 0) return std::nullopt;
+    // A dead key types nothing by itself: it would combine with the next character.
+    if (backend.isDeadKey(vk, modifiers)) return std::nullopt;
 
     // With Caps Lock on, letters need the opposite Shift state.
     if (backend.isKeyToggled(VK_CAPITAL) && IsCharAlphaW(ch)) modifiers ^= kShift;
@@ -95,6 +97,10 @@ Status buildTextGroups(std::wstring_view text, TextMode mode, bool fallbackToUni
             groups.push_back(*group);
             continue;
         }
+
+        // Other control characters would become shortcuts in Keystrokes mode
+        // (U+0001 is Ctrl+A, U+0016 Ctrl+V) and raw control codes as Unicode.
+        if (ch < 0x20 || ch == 0x7F) return Error::InvalidArgument;
 
         if (isLowSurrogate(ch)) return Error::InvalidArgument;
         if (isHighSurrogate(ch)) {

@@ -105,7 +105,7 @@ input.keyboard.type(L"PlayerOne_123", {
 });
 ```
 
-UTF-8 (`std::string_view`, `u8""`) and UTF-16 (`std::wstring_view`) are accepted. `\n`, `\r\n` and `\t` press Enter and Tab. In `Keystrokes` mode, characters without a key (and emoji) fall back to Unicode unless `.fallbackToUnicode = false`, in which case the call fails with `UnmappableCharacter` before typing anything. Invalid text fails with `InvalidArgument`, also before anything is sent.
+UTF-8 (`std::string_view`, `u8""`) and UTF-16 (`std::wstring_view`) are accepted. `\n`, `\r\n` and `\r` press Enter, `\t` presses Tab. In `Keystrokes` mode, characters without a single key fall back to Unicode unless `.fallbackToUnicode = false`, in which case the call fails with `UnmappableCharacter` before typing anything. That covers characters the layout has no key for, emoji, and characters on dead keys (`^`, `` ` ``, `´`, `¨`, `~` on many European layouts), which would otherwise combine with the next character. Invalid text fails with `InvalidArgument`, also before anything is sent: bad UTF-8, unpaired surrogates and control characters other than `\t`, `\n` and `\r` (in `Keystrokes` mode they would become shortcuts such as Ctrl+A or Ctrl+V).
 
 ### Mouse
 

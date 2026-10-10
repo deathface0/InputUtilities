@@ -79,6 +79,7 @@ TEST_CASE("win32Backend is a shared instance with sane system values") {
     CHECK(screen.height > 0);
 
     CHECK(backend->vkToScanCode('A') != 0);
+    CHECK_FALSE(backend->isDeadKey('A', 0)); // a letter is never a dead key
     CHECK(backend->doubleClickTime() > 0ms);
 }
 

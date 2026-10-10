@@ -37,6 +37,7 @@ public:
     // --- Keyboard layout (filled by each test) ------------------------------
     std::map<wchar_t, std::int16_t> vkScan;          // character -> VkKeyScan value
     std::map<std::uint16_t, std::uint16_t> vkToScan; // vk -> scan code (0xE0xx for extended)
+    std::set<std::int16_t> deadKeys;                 // VkKeyScan values (vk | modifiers << 8) of dead keys
 
     // --- Key state ----------------------------------------------------------
     std::set<std::uint16_t> keysDown;
@@ -126,13 +127,16 @@ public:
         return fake;
     }
 
-    /// Characters of a Spanish layout: '@' and '€' need AltGr (Ctrl+Alt),
-    /// 'ñ' has its own key and 'á' is a dead-key composition (no single key).
+    /// Characters of a Spanish layout as VkKeyScanEx reports them on Windows:
+    /// '@' and '€' need AltGr (Ctrl+Alt), 'ñ' has its own key and 'á' is a
+    /// dead-key composition (no single key). ` ^ ´ ¨ ~ are dead keys, while
+    /// '[' shares the key of ` and ^ but is a normal character.
     void loadEsLayout() {
         loadUsScanCodes();
         loadLettersAndDigits();
         vkToScan[VK_OEM_3] = 0x27;     // ñ
         vkToScan[VK_OEM_MINUS] = 0x35; // - and _
+        vkToScan[VK_OEM_1] = 0x1A;     // ` ^ [
         vkScan[L'!'] = 0x0131;
         vkScan[L'@'] = 0x0632;
         vkScan[L'€'] = 0x0645;
@@ -140,6 +144,12 @@ public:
         vkScan[L'Ñ'] = 0x01C0;
         vkScan[L'-'] = 0x00BD;
         vkScan[L'_'] = 0x01BD;
+        vkScan[L'['] = 0x06BA;
+        for (const auto& [ch, scan] :
+             {std::pair{L'`', 0x00BA}, {L'^', 0x01BA}, {L'´', 0x00DE}, {L'¨', 0x01DE}, {L'~', 0x0634}}) {
+            vkScan[ch] = static_cast<std::int16_t>(scan);
+            deadKeys.insert(static_cast<std::int16_t>(scan));
+        }
     }
 
     /// Every accepted event, in order, across all batches.
@@ -181,6 +191,10 @@ public:
         for (const auto& [vk, sc] : vkToScan)
             if (sc == scanCode) return vk;
         return 0;
+    }
+
+    bool isDeadKey(std::uint16_t vk, unsigned modifiers) override {
+        return deadKeys.contains(static_cast<std::int16_t>(vk | (modifiers << 8)));
     }
 
     bool isKeyDown(std::uint16_t vk) override {

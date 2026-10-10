@@ -154,6 +154,43 @@ TEST_CASE("keystrokes mode uses AltGr and layout keys on a Spanish keyboard") {
     CHECK(input.heldCount() == 0);
 }
 
+TEST_CASE("dead keys are typed as Unicode on a Spanish keyboard") {
+    auto fake = std::make_shared<FakeBackend>();
+    fake->loadEsLayout();
+    Input input(Config{.backend = fake});
+
+    // ^ and ~ are dead keys (they would turn "^a" into "â"); [ shares the key of ^ but is a normal character.
+    REQUIRE(input.keyboard.type(L"^[~", kKeystrokes));
+    REQUIRE(fake->batches.size() == 3);
+    CHECK(isUnicode(fake->batches[0][0], L'^', false));
+    CHECK(keysOf(fake->batches[1]) == Keys{{VK_LCONTROL, false},
+                                           {VK_RMENU, false},
+                                           {VK_OEM_1, false},
+                                           {VK_OEM_1, true},
+                                           {VK_RMENU, true},
+                                           {VK_LCONTROL, true}});
+    CHECK(isUnicode(fake->batches[2][0], L'~', false));
+
+    fake->batches.clear();
+    const TypeOptions strict{.mode = TextMode::Keystrokes, .fallbackToUnicode = false};
+    CHECK(input.keyboard.type(L"a´", strict) == Error::UnmappableCharacter);
+    CHECK(fake->batches.empty());
+}
+
+TEST_CASE_FIXTURE(Fixture, "control characters are rejected before anything is sent") {
+    // In Keystrokes mode they would become shortcuts: U+0001 is Ctrl+A, U+0016 Ctrl+V, U+001B Esc.
+    for (const TextMode mode : {TextMode::Unicode, TextMode::Keystrokes}) {
+        CAPTURE(static_cast<int>(mode));
+        for (const wchar_t control : {L'\x01', L'\x16', L'\x1B', L'\x7F', L'\0'}) {
+            CAPTURE(static_cast<int>(control));
+            const wchar_t text[] = {L'a', control, L'b'};
+            CHECK(input.keyboard.type(std::wstring_view(text, 3), {.mode = mode}) == Error::InvalidArgument);
+        }
+    }
+    CHECK(input.keyboard.type("ok\x16") == Error::InvalidArgument);
+    CHECK(fake->batches.empty());
+}
+
 TEST_CASE_FIXTURE(Fixture, "Caps Lock inverts Shift for letters only") {
     fake->toggled.insert(VK_CAPITAL);
     REQUIRE(input.keyboard.type("Aa!", kKeystrokes));
