@@ -148,6 +148,17 @@ TEST_CASE("jitter moves intermediate points by at most jitterPx and never the la
     CHECK(noisy.back().point == Point{400, 0});
 }
 
+TEST_CASE("a negative jitter is the same as none") {
+    Motion none = Motion::linear(200ms);
+    Motion negative = none;
+    negative.jitterPx = -3;
+
+    const auto expected = plan({0, 0}, {400, 100}, none, 5);
+    const auto actual = plan({0, 0}, {400, 100}, negative, 5);
+    REQUIRE(actual.size() == expected.size());
+    for (std::size_t i = 0; i < actual.size(); ++i) CHECK(actual[i].point == expected[i].point);
+}
+
 TEST_CASE("playPath sends every point at its deadline") {
     auto fake = std::make_shared<FakeBackend>();
     inpututil::detail::Session session(fake, inpututil::kDefaultExtraInfoTag);

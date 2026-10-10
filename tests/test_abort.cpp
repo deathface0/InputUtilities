@@ -23,6 +23,16 @@ struct Fixture {
     void pressF12After(std::chrono::milliseconds delay) { fake->pressedFrom[VK_F12] = fake->now() + delay; }
 };
 
+// Presses F12 right after a number of sends, without the fake clock moving.
+struct PressF12AfterSends : FakeBackend {
+    std::size_t sends = 0;
+    unsigned sendInput(std::span<const tagINPUT> inputs) override {
+        const unsigned accepted = FakeBackend::sendInput(inputs);
+        if (batches.size() == sends) keysDown.insert(VK_F12);
+        return accepted;
+    }
+};
+
 } // namespace
 
 TEST_CASE("without an abort key nothing is aborted") {
@@ -44,6 +54,17 @@ TEST_CASE_FIXTURE(Fixture, "a long movement stops when the abort key goes down")
     CHECK(fake->batches.size() >= 55);
     CHECK(fake->batches.size() <= 61);
     CHECK_FALSE(fake->cursor == Point{1000, 0});
+}
+
+TEST_CASE("the abort key is checked even when a movement runs late") {
+    auto fake = std::make_shared<PressF12AfterSends>();
+    fake->sends = 3;
+    fake->sleepOvershoot = 1s; // after the first step, every deadline has already passed
+    Input input(Config{.abortKey = Key::F12, .backend = fake});
+
+    CHECK(input.mouse.moveTo({1000, 0}, Motion::linear(100ms)) == Error::Aborted);
+    CHECK(fake->batches.size() == 3);
+    CHECK(input.heldCount() == 0);
 }
 
 TEST_CASE_FIXTURE(Fixture, "aborting releases everything that is held") {

@@ -51,7 +51,8 @@ std::vector<PathStep> planPath(Point from, Point to, const Motion& motion, std::
         c2 = c2 + normal * (offset(rng) * distance);
     }
 
-    std::uniform_int_distribution<int> jitter(-motion.jitterPx, motion.jitterPx);
+    const int jitterPx = std::max(motion.jitterPx, 0); // a negative range would be undefined behaviour
+    std::uniform_int_distribution<int> jitter(-jitterPx, jitterPx);
     const nanoseconds duration = motion.duration;
 
     std::vector<PathStep> path;
@@ -59,7 +60,7 @@ std::vector<PathStep> planPath(Point from, Point to, const Motion& motion, std::
     for (long long i = 1; i <= steps; ++i) {
         const double e = easingValue(motion.easing, static_cast<double>(i) / static_cast<double>(steps));
         Point point = toPoint(motion.curved ? bezier(start, c1, c2, end, e) : start + delta * e);
-        if (i < steps && motion.jitterPx > 0) {
+        if (i < steps && jitterPx > 0) {
             point.x += jitter(rng);
             point.y += jitter(rng);
         }
@@ -73,8 +74,11 @@ Status playPath(Session& session, Point from, const std::vector<PathStep>& path,
     const auto start = session.backend().now();
     Point previous = from;
     for (const PathStep& step : path) {
-        const auto deadline = start + std::chrono::duration_cast<Backend::Clock::duration>(step.at);
-        if (const Status status = session.waitUntil(deadline); !status) return status;
+        // An instant move (a single step at time zero) neither waits nor checks the abort key.
+        if (step.at > std::chrono::nanoseconds::zero()) {
+            const auto deadline = start + std::chrono::duration_cast<Backend::Clock::duration>(step.at);
+            if (const Status status = session.waitUntil(deadline); !status) return status;
+        }
 
         const INPUT event = makeEvent(previous, step.point);
         if (const Status status = session.send(std::span(&event, 1)); !status) return status;

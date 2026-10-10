@@ -29,7 +29,7 @@ struct Motion {
     /// Follow a randomly bent Bézier curve instead of a straight line.
     bool curved = false;
 
-    /// Random offset, in pixels, added to every intermediate point.
+    /// Random offset, in pixels, added to every intermediate point; 0 or less adds none.
     int jitterPx = 0;
 
     /// Time between two points (at least 1 ms).

@@ -60,13 +60,14 @@ public:
     /// If the abort key is down: releases everything and returns Aborted.
     Status checkAbort();
 
-    /// Waits until the deadline on the backend clock (returns at once if it
-    /// passed). The single waiting point of the library: with an abort key it
-    /// polls the key every 10 ms and returns Aborted when it goes down.
+    /// Waits until the deadline on the backend clock. The single waiting point
+    /// of the library: with an abort key it polls the key every 10 ms and
+    /// returns Aborted when it goes down. A deadline that already passed
+    /// returns at once, after checking the abort key.
     Status waitUntil(Backend::Clock::time_point deadline);
 
-    /// Waits for the duration on the backend clock. A zero duration still
-    /// checks the abort key.
+    /// Waits for the duration on the backend clock. A zero or negative
+    /// duration only checks the abort key.
     Status wait(std::chrono::nanoseconds duration);
 
 private:

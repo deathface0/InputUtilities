@@ -118,12 +118,12 @@ Status Session::checkAbort() {
 }
 
 Status Session::waitUntil(Backend::Clock::time_point deadline) {
-    if (deadline <= backend_->now()) return {};
     if (abortVk_.load() == 0) {
-        backend_->sleepUntil(deadline);
+        if (deadline > backend_->now()) backend_->sleepUntil(deadline);
         return {};
     }
 
+    // With an abort key: check it at least once, even when already late.
     constexpr auto kPollInterval = std::chrono::milliseconds(10);
     while (true) {
         if (const Status status = checkAbort(); !status) return status;
@@ -134,7 +134,6 @@ Status Session::waitUntil(Backend::Clock::time_point deadline) {
 }
 
 Status Session::wait(std::chrono::nanoseconds duration) {
-    if (duration <= std::chrono::nanoseconds::zero()) return checkAbort();
     return waitUntil(backend_->now() + std::chrono::duration_cast<Backend::Clock::duration>(duration));
 }
 
