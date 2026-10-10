@@ -43,6 +43,10 @@ public:
     /// not be released stays tracked so a later call can retry it.
     Status releaseAll();
 
+    /// Sends, best effort, only the releases whose key or button is still held:
+    /// nothing that never went down or was already released gets an up event.
+    Status release(std::span<const INPUT> releases);
+
     /// releaseAll() for a dying process: never throws and never blocks for
     /// long. If the lock cannot be taken (the crash happened while sending),
     /// the releases are sent anyway without touching the tracking.
@@ -79,6 +83,7 @@ private:
     Status sendLocked(std::span<const INPUT> inputs, SendMode mode);
     std::vector<INPUT> releasesLocked() const; // release events, last pressed first
     void track(const INPUT& input);
+    bool isHeldLocked(std::uint32_t id) const;
     void markHeld(std::uint32_t id, const INPUT& release);
     void markReleased(std::uint32_t id);
 

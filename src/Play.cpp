@@ -1,6 +1,5 @@
 #include "inpututil/Input.h"
 
-#include <utility>
 #include <vector>
 
 #include "detail/Coords.h"
@@ -60,17 +59,17 @@ Status Input::play(const Sequence& sequence) {
     if (!sequence.empty())
         if (const Status status = session_->checkAbort(); !status) return status;
 
-    std::vector<INPUT> pending;                   // instant events waiting to go in one batch
-    std::vector<std::pair<INPUT, INPUT>> pressed; // (press, release) of everything this sequence pressed
-    std::optional<Point> pendingGoal;             // where the pending batch leaves the cursor, if known
+    std::vector<INPUT> pending;       // instant events waiting to go in one batch
+    std::vector<INPUT> releases;      // release of everything this sequence pressed, last first
+    std::optional<Point> pendingGoal; // where the pending batch leaves the cursor, if known
 
     const auto queueKey = [&](const Key& key, bool down) {
         pending.push_back(*detail::makeKeyInput(key, mode, !down, backend));
-        if (down) pressed.emplace_back(pending.back(), *detail::makeKeyInput(key, mode, true, backend));
+        if (down) releases.insert(releases.begin(), *detail::makeKeyInput(key, mode, true, backend));
     };
     const auto queueButton = [&](MouseButton button, bool down) {
         pending.push_back(detail::makeButtonInput(button, !down));
-        if (down) pressed.emplace_back(pending.back(), detail::makeButtonInput(button, true));
+        if (down) releases.insert(releases.begin(), detail::makeButtonInput(button, true));
     };
     const auto flush = [&]() -> Status {
         if (pending.empty()) return {};
@@ -84,10 +83,7 @@ Status Input::play(const Sequence& sequence) {
     };
     // On failure, release what this sequence pressed and is still down (never the user's own holds).
     const auto fail = [&](Status status) {
-        std::vector<INPUT> releases;
-        for (auto it = pressed.rbegin(); it != pressed.rend(); ++it)
-            if (session_->isHeld(it->first)) releases.push_back(it->second);
-        if (!releases.empty()) session_->send(releases, detail::SendMode::BestEffort);
+        session_->release(releases);
         return status;
     };
 

@@ -2,6 +2,8 @@
 
 #include "FakeBackend.h"
 
+#include <algorithm>
+
 #include <inpututil/inpututil.h>
 
 using inpututil::Config;
@@ -108,6 +110,16 @@ TEST_CASE_FIXTURE(Fixture, "timed clicks and timed scrolling are aborted too") {
     fake->pressedFrom.clear();
     pressF12After(50ms);
     CHECK(input.mouse.scroll(10, 500ms) == Error::Aborted);
+}
+
+TEST_CASE_FIXTURE(Fixture, "an aborted drag releases the button once") {
+    pressF12After(30ms);
+    CHECK(input.mouse.drag({0, 0}, {500, 0}, Motion::linear(100ms)) == Error::Aborted);
+    const auto sent = fake->allSent();
+    const auto ups = std::count_if(sent.begin(), sent.end(),
+                                   [](const INPUT& in) { return in.mi.dwFlags == MOUSEEVENTF_LEFTUP; });
+    CHECK(ups == 1); // the abort's own release, no second one from drag
+    CHECK(input.heldCount() == 0);
 }
 
 TEST_CASE_FIXTURE(Fixture, "instant actions ignore the abort key") {

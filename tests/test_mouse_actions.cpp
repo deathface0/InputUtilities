@@ -63,6 +63,12 @@ TEST_CASE_FIXTURE(Fixture, "a partially sent multi-click still releases the butt
     CHECK(input.heldCount() == 0);
 }
 
+TEST_CASE_FIXTURE(Fixture, "a rejected click sends no release") {
+    fake->acceptLimit = 0;
+    CHECK(input.mouse.click() == Error::SystemFailure);
+    CHECK(fake->batches.size() == 1); // only the click itself: the button never went down
+}
+
 TEST_CASE_FIXTURE(Fixture, "double click") {
     SUBCASE("instant: one batch of four events") {
         REQUIRE(input.mouse.doubleClick());

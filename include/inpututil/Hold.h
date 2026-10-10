@@ -28,7 +28,8 @@ public:
     /// Releases now. Calling it again does nothing and returns success.
     Status release();
 
-    /// Whether something is still being held.
+    /// Whether release() still has something to do. The keys may already be up
+    /// if releaseAll() or the abort key released them; release() then sends nothing.
     bool active() const noexcept { return static_cast<bool>(release_); }
 
     /// Result of the initial press; when it failed, nothing is held.

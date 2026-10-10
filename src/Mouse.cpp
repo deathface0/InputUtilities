@@ -107,7 +107,7 @@ Status Mouse::click(MouseButton button, const ClickOptions& options) {
     // Sends the events; if the system rejects them, releases the button before failing.
     const auto sendOrRelease = [&](std::span<const INPUT> events) {
         const Status status = session_->send(events);
-        if (!status) session_->send(std::span(&upEvent, 1), detail::SendMode::BestEffort);
+        if (!status) session_->release(std::span(&upEvent, 1));
         return status;
     };
 
@@ -134,9 +134,7 @@ Status Mouse::click(MouseButton button, const ClickOptions& options) {
 
         if (const Status status = sendOrRelease(std::span(&downEvent, 1)); !status) return status;
         if (const Status status = session_->wait(options.hold); !status) return status; // aborted: released
-        if (const Status status = session_->send(std::span(&upEvent, 1), detail::SendMode::BestEffort);
-            !status)
-            return status;
+        if (const Status status = session_->release(std::span(&upEvent, 1)); !status) return status;
     }
     return {};
 }
@@ -156,7 +154,9 @@ Status Mouse::drag(Point from, Point to, const Motion& motion, MouseButton butto
     if (const Status status = down(button); !status) return status;
 
     const Status moved = moveAbsolute(start, to, motion);
-    const Status released = up(button); // always, even if the movement failed
+    // Always released, even if the movement failed (unless the abort key already did it).
+    const INPUT upEvent = detail::makeButtonInput(button, true);
+    const Status released = session_->release(std::span(&upEvent, 1));
     return moved ? released : moved;
 }
 

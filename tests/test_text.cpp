@@ -264,6 +264,12 @@ TEST_CASE_FIXTURE(Fixture, "a partially sent character releases its modifiers") 
     CHECK(input.heldCount() == 0);
 }
 
+TEST_CASE_FIXTURE(Fixture, "a rejected character sends no releases") {
+    fake->acceptLimit = 0;
+    CHECK(input.keyboard.type("A", kKeystrokes) == Error::SystemFailure);
+    CHECK(fake->batches.size() == 1); // only the character itself: nothing went down
+}
+
 TEST_CASE_FIXTURE(Fixture, "empty text and a moved-from Input") {
     CHECK(input.keyboard.type(""));
     CHECK(fake->batches.empty());

@@ -60,7 +60,7 @@ public:
 
     /// Presses the keys in order and releases them in reverse order. Without
     /// `hold` everything goes in a single batch. If the system rejects part of
-    /// it, every key is still released and the error is returned.
+    /// it, every key that went down is released and the error is returned.
     Status press(const KeyCombo& combo, std::chrono::milliseconds hold = {});
     Status press(std::string_view combo, std::chrono::milliseconds hold = {});
 

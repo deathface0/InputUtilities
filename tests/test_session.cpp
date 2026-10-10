@@ -180,6 +180,22 @@ TEST_CASE_FIXTURE(Fixture, "keys that could not be released stay tracked for a r
     CHECK(session.heldCount() == 0);
 }
 
+TEST_CASE_FIXTURE(Fixture, "release only sends what is still held") {
+    const INPUT down[] = {keyDown('A', 0x1E)};
+    REQUIRE(session.send(down));
+    fake->batches.clear();
+
+    const INPUT ups[] = {keyUp('A', 0x1E), keyUp('B', 0x30), keyUp('A', 0x1E)};
+    REQUIRE(session.release(ups));
+    REQUIRE(fake->batches.size() == 1);
+    REQUIRE(fake->batches[0].size() == 1); // B never went down, and A is released once
+    CHECK(fake->batches[0][0].ki.wVk == 'A');
+    CHECK(session.heldCount() == 0);
+
+    REQUIRE(session.release(ups)); // nothing held any more: nothing sent
+    CHECK(fake->batches.size() == 1);
+}
+
 TEST_CASE_FIXTURE(Fixture, "wait advances the backend clock") {
     const auto start = fake->now();
     REQUIRE(session.wait(30ms));

@@ -100,6 +100,20 @@ TEST_CASE_FIXTURE(Fixture, "a partially sent combo still releases every key") {
     fake->acceptLimit = 2;
     CHECK(input.keyboard.press("Ctrl+Shift+Esc") == Error::PartialSend);
     CHECK(input.heldCount() == 0);
+
+    // Only what went down is released: no Esc up for an Esc that was never pressed.
+    const auto& releases = fake->batches.back();
+    REQUIRE(releases.size() == 2);
+    CHECK(isKeyEvent(releases[0], VK_SHIFT, true));
+    CHECK(isKeyEvent(releases[1], VK_CONTROL, true));
+}
+
+TEST_CASE_FIXTURE(Fixture, "a Hold released after releaseAll sends nothing") {
+    auto shift = input.keyboard.hold(Key::Shift);
+    REQUIRE(input.releaseAll());
+    const auto batches = fake->batches.size();
+    CHECK(shift.release());
+    CHECK(fake->batches.size() == batches);
 }
 
 TEST_CASE_FIXTURE(Fixture, "hold keeps a key down until the Hold goes away") {

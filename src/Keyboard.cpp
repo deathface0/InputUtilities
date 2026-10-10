@@ -36,16 +36,16 @@ Status Keyboard::press(const KeyCombo& combo, std::chrono::milliseconds hold) {
 
     if (hold <= std::chrono::milliseconds::zero()) {
         const Status status = session_->send(events->tap());
-        if (!status) session_->send(events->ups, detail::SendMode::BestEffort); // never leave keys down
+        if (!status) session_->release(events->ups); // never leave keys down
         return status;
     }
 
     if (const Status status = session_->send(events->downs); !status) {
-        session_->send(events->ups, detail::SendMode::BestEffort);
+        session_->release(events->ups);
         return status;
     }
     if (const Status status = session_->wait(hold); !status) return status; // aborted: already released
-    return session_->send(events->ups, detail::SendMode::BestEffort);
+    return session_->release(events->ups);
 }
 
 Status Keyboard::press(std::string_view combo, std::chrono::milliseconds hold) {
@@ -62,7 +62,7 @@ Hold Keyboard::hold(const KeyCombo& combo) {
     if (!events) return Hold(nullptr, Error::InvalidArgument);
 
     if (const Status status = session_->send(events->downs); !status) {
-        session_->send(events->ups, detail::SendMode::BestEffort);
+        session_->release(events->ups);
         return Hold(nullptr, status);
     }
 
@@ -121,7 +121,7 @@ Status Keyboard::type(std::wstring_view text, const TypeOptions& options) {
                 up.ki.dwFlags |= KEYEVENTF_KEYUP;
                 ups.insert(ups.begin(), up);
             }
-            session_->send(ups, detail::SendMode::BestEffort);
+            session_->release(ups);
             return status;
         }
     }

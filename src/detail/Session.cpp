@@ -42,6 +42,19 @@ std::uint32_t keyIdentity(const KEYBDINPUT& ki) {
     return kKeyVk | ki.wVk;
 }
 
+// The key, or the first mouse button, that the event presses or releases; 0 for anything else.
+std::uint32_t identityOf(const INPUT& event) {
+    if (event.type == INPUT_KEYBOARD) return keyIdentity(event.ki);
+    if (event.type == INPUT_MOUSE) {
+        for (std::uint32_t i = 0; i < std::size(kMouseButtons); ++i) {
+            const MouseButtonFlags& button = kMouseButtons[i];
+            if (hasButton(event.mi, button.down, button.data) || hasButton(event.mi, button.up, button.data))
+                return kMouse | i;
+        }
+    }
+    return 0;
+}
+
 } // namespace
 
 Session::Session(std::shared_ptr<Backend> backend, std::uintptr_t extraInfoTag)
@@ -91,22 +104,27 @@ std::size_t Session::heldCount() const {
 }
 
 bool Session::isHeld(const INPUT& event) const {
-    std::uint32_t id = 0;
-    if (event.type == INPUT_KEYBOARD) {
-        id = keyIdentity(event.ki);
-    } else if (event.type == INPUT_MOUSE) {
-        for (std::uint32_t i = 0; i < std::size(kMouseButtons); ++i) {
-            const MouseButtonFlags& button = kMouseButtons[i];
-            if (hasButton(event.mi, button.down, button.data) ||
-                hasButton(event.mi, button.up, button.data)) {
-                id = kMouse | i;
-                break;
-            }
-        }
-    }
+    const std::uint32_t id = identityOf(event);
     if (id == 0) return false;
 
     std::lock_guard lock(mutex_);
+    return isHeldLocked(id);
+}
+
+Status Session::release(std::span<const INPUT> releases) {
+    std::lock_guard lock(mutex_);
+    std::vector<INPUT> stillHeld;
+    std::vector<std::uint32_t> ids; // each key or button is released once
+    for (const INPUT& event : releases) {
+        const std::uint32_t id = identityOf(event);
+        if (id == 0 || !isHeldLocked(id) || std::find(ids.begin(), ids.end(), id) != ids.end()) continue;
+        stillHeld.push_back(event);
+        ids.push_back(id);
+    }
+    return sendLocked(stillHeld, SendMode::BestEffort);
+}
+
+bool Session::isHeldLocked(std::uint32_t id) const {
     return std::any_of(held_.begin(), held_.end(), [id](const HeldInput& h) { return h.id == id; });
 }
 
@@ -197,9 +215,7 @@ void Session::track(const INPUT& input) {
 }
 
 void Session::markHeld(std::uint32_t id, const INPUT& release) {
-    const bool alreadyHeld =
-        std::any_of(held_.begin(), held_.end(), [id](const HeldInput& h) { return h.id == id; });
-    if (!alreadyHeld) held_.push_back({id, release});
+    if (!isHeldLocked(id)) held_.push_back({id, release});
 }
 
 void Session::markReleased(std::uint32_t id) {
@@ -208,7 +224,7 @@ void Session::markReleased(std::uint32_t id) {
 
 std::function<Status()> makeReleaser(Session& session, std::vector<INPUT> releases) {
     return [weak = session.weak_from_this(), releases = std::move(releases)]() -> Status {
-        if (const auto alive = weak.lock()) return alive->send(releases, SendMode::BestEffort);
+        if (const auto alive = weak.lock()) return alive->release(releases);
         return {}; // the Input is gone and already released everything
     };
 }
