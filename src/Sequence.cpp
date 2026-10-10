@@ -41,9 +41,13 @@ Sequence& Sequence::click(MouseButton button, const ClickOptions& options) {
 
 Sequence& Sequence::moveTo(Point target, const Motion& motion) { return add(steps::MoveTo{target, motion}); }
 
-Sequence& Sequence::moveBy(int dx, int dy, const Motion& motion) { return add(steps::MoveBy{dx, dy, motion}); }
+Sequence& Sequence::moveBy(int dx, int dy, const Motion& motion) {
+    return add(steps::MoveBy{dx, dy, motion});
+}
 
-Sequence& Sequence::moveRaw(int dx, int dy, const Motion& motion) { return add(steps::MoveRaw{dx, dy, motion}); }
+Sequence& Sequence::moveRaw(int dx, int dy, const Motion& motion) {
+    return add(steps::MoveRaw{dx, dy, motion});
+}
 
 Sequence& Sequence::scroll(double notches, std::chrono::milliseconds duration) {
     return add(steps::Scroll{notches, duration, false});

@@ -122,7 +122,8 @@ TEST_CASE_FIXTURE(Fixture, "keystrokes mode types PlayerOne_123 exactly (broken 
         const WORD vk = ch == L'_' ? WORD{VK_OEM_MINUS} : static_cast<WORD>(std::towupper(ch));
         CAPTURE(i);
         if (needsShift) {
-            CHECK(keysOf(fake->batches[i]) == Keys{{VK_LSHIFT, false}, {vk, false}, {vk, true}, {VK_LSHIFT, true}});
+            CHECK(keysOf(fake->batches[i]) ==
+                  Keys{{VK_LSHIFT, false}, {vk, false}, {vk, true}, {VK_LSHIFT, true}});
         } else {
             CHECK(keysOf(fake->batches[i]) == Keys{{vk, false}, {vk, true}});
         }
@@ -136,10 +137,18 @@ TEST_CASE("keystrokes mode uses AltGr and layout keys on a Spanish keyboard") {
 
     REQUIRE(input.keyboard.type(L"@€ñ", kKeystrokes));
     REQUIRE(fake->batches.size() == 3);
-    CHECK(keysOf(fake->batches[0]) == Keys{{VK_LCONTROL, false}, {VK_RMENU, false}, {'2', false},
-                                           {'2', true}, {VK_RMENU, true}, {VK_LCONTROL, true}});
-    CHECK(keysOf(fake->batches[1]) == Keys{{VK_LCONTROL, false}, {VK_RMENU, false}, {'E', false},
-                                           {'E', true}, {VK_RMENU, true}, {VK_LCONTROL, true}});
+    CHECK(keysOf(fake->batches[0]) == Keys{{VK_LCONTROL, false},
+                                           {VK_RMENU, false},
+                                           {'2', false},
+                                           {'2', true},
+                                           {VK_RMENU, true},
+                                           {VK_LCONTROL, true}});
+    CHECK(keysOf(fake->batches[1]) == Keys{{VK_LCONTROL, false},
+                                           {VK_RMENU, false},
+                                           {'E', false},
+                                           {'E', true},
+                                           {VK_RMENU, true},
+                                           {VK_LCONTROL, true}});
     CHECK(keysOf(fake->batches[2]) == Keys{{VK_OEM_3, false}, {VK_OEM_3, true}});
     CHECK(fake->batches[2][0].ki.wScan == 0x27);
     CHECK(input.heldCount() == 0);
@@ -203,7 +212,8 @@ TEST_CASE("jitter is reproducible with a seed and never negative") {
         CHECK(pause >= 20ms);
         CHECK(pause <= 40ms);
     }
-    CHECK(std::adjacent_find(first.begin(), first.end(), std::not_equal_to<>()) != first.end()); // not constant
+    // not constant
+    CHECK(std::adjacent_find(first.begin(), first.end(), std::not_equal_to<>()) != first.end());
 
     for (const auto pause : run({.delay = 5ms, .jitter = 20ms, .seed = 7})) {
         CHECK(pause > 0ms);

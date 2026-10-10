@@ -4,12 +4,12 @@
 
 #include <inpututil/inpututil.h>
 
-using inpututil::KeyCombo;
 using inpututil::Config;
 using inpututil::Error;
 using inpututil::Hold;
 using inpututil::Input;
 using inpututil::Key;
+using inpututil::KeyCombo;
 using inpututil::KeyMode;
 using namespace std::chrono_literals;
 
@@ -205,7 +205,8 @@ TEST_CASE("move assignment releases the target's keys and takes over the source"
     CHECK(target.heldCount() == 1);
     CHECK(target.keyboard.isHeld(Key::B));
     CHECK(target.keyboard.mode() == KeyMode::ScanCode);
-    CHECK(target.mouse.moveTo({800, 600}) == Error::TargetNotReached); // the source's verifyCursor and backend
+    // the source's verifyCursor and backend
+    CHECK(target.mouse.moveTo({800, 600}) == Error::TargetNotReached);
 
     CHECK(source.keyboard.down(Key::C) == Error::InvalidArgument);
     CHECK(source.mouse.down() == Error::InvalidArgument);

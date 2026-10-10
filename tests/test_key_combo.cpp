@@ -2,8 +2,8 @@
 
 #include <inpututil/Key.h>
 
-using inpututil::KeyCombo;
 using inpututil::Key;
+using inpututil::KeyCombo;
 
 namespace {
 
@@ -47,8 +47,8 @@ TEST_CASE("Key::parse accepts raw virtual keys and scan codes") {
 }
 
 TEST_CASE("Key::parse rejects unknown names") {
-    for (const char* text : {"", "   ", "foo", "F0", "F25", "vk:zz", "vk:0x10000", "vk:0x100", "vk:0", "sc:0x1234",
-                             "ctrl+c", "Num10"}) {
+    for (const char* text : {"", "   ", "foo", "F0", "F25", "vk:zz", "vk:0x10000", "vk:0x100", "vk:0",
+                             "sc:0x1234", "ctrl+c", "Num10"}) {
         CAPTURE(text);
         CHECK_FALSE(Key::parse(text));
     }

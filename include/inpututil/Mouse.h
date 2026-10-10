@@ -88,7 +88,8 @@ public:
 private:
     friend class Input;
 
-    Mouse(detail::Session* session, bool verifyCursor) noexcept : session_(session), verifyCursor_(verifyCursor) {}
+    Mouse(detail::Session* session, bool verifyCursor) noexcept
+        : session_(session), verifyCursor_(verifyCursor) {}
 
     // Used by Input's move operations: takes the session and leaves `other` empty.
     Mouse(Mouse&& other) noexcept

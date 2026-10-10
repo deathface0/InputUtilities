@@ -7,9 +7,10 @@ TabWidth: 4
 UseTab: Never
 ColumnLimit: 110
 AccessModifierOffset: -4
-AllowShortFunctionsOnASingleLine: Inline
-AllowShortIfStatementsOnASingleLine: WithoutElse
-AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
 BreakBeforeBraces: Attach
 DerivePointerAlignment: false
 PointerAlignment: Left

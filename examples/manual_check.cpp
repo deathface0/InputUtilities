@@ -63,14 +63,16 @@ void checkCursor(Input& input, Summary& summary) {
         const auto reached = input.mouse.position();
         const bool pass = status && reached && *reached == target;
         ok += pass ? 1 : 0;
-        std::printf("  target (%6d, %6d)  reached (%6d, %6d)  %s\n", target.x, target.y, reached ? reached->x : 0,
-                    reached ? reached->y : 0, pass ? "PASS" : "FAIL");
+        std::printf("  target (%6d, %6d)  reached (%6d, %6d)  %s\n", target.x, target.y,
+                    reached ? reached->x : 0, reached ? reached->y : 0, pass ? "PASS" : "FAIL");
     }
 
-    const Point smoothTarget{(targets.front().x + targets.back().x) / 2, (targets.front().y + targets.back().y) / 2};
+    const Point smoothTarget{(targets.front().x + targets.back().x) / 2,
+                             (targets.front().y + targets.back().y) / 2};
     input.mouse.moveTo(smoothTarget, Motion::smooth(300ms));
     const bool smoothOk = input.mouse.position() == smoothTarget;
-    std::printf("  smooth move to (%d, %d)            %s\n", smoothTarget.x, smoothTarget.y, smoothOk ? "PASS" : "FAIL");
+    std::printf("  smooth move to (%d, %d)            %s\n", smoothTarget.x, smoothTarget.y,
+                smoothOk ? "PASS" : "FAIL");
 
     if (start) input.mouse.moveTo(*start);
     const bool pass = ok == static_cast<int>(targets.size()) && smoothOk;
@@ -104,9 +106,8 @@ void checkAbort(Input& input, Summary& summary) {
     input.setAbortKey(Key::F12);
     std::puts("Slow typing will start; press F12 while it types.");
     examples::countdown("Focus a text editor", 5);
-    const Status status =
-        input.keyboard.type("This line is typed slowly so that you can press F12 in the middle of it.",
-                            {.delay = 120ms});
+    const Status status = input.keyboard.type(
+        "This line is typed slowly so that you can press F12 in the middle of it.", {.delay = 120ms});
     const bool pass = status == Error::Aborted && input.heldCount() == 0;
     std::printf("Result: %s, held keys: %zu. %s\n", status.message().c_str(), input.heldCount(),
                 pass ? "PASS" : "FAIL");

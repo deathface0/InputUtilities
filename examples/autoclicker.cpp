@@ -17,8 +17,8 @@ int main(int argc, char** argv) {
     std::printf("%d clicks every %d ms. Press F12 to stop.\n", count, intervalMs);
     examples::countdown("Hover the target", 3);
 
-    const Status status =
-        input.mouse.click(MouseButton::Left, {.count = count, .interval = std::chrono::milliseconds(intervalMs)});
+    const Status status = input.mouse.click(
+        MouseButton::Left, {.count = count, .interval = std::chrono::milliseconds(intervalMs)});
     examples::report(status, status == Error::Aborted ? "stopped with F12" : "clicks");
     return status ? 0 : 1;
 }

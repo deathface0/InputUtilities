@@ -15,9 +15,9 @@ int main() {
 
     examples::report(input.mouse.moveTo({800, 400}, Motion::human(400ms)), "move to the field");
     examples::report(input.mouse.click(), "click");
-    examples::report(input.keyboard.type("PlayerOne_123",
-                                         {.mode = TextMode::Keystrokes, .delay = 70ms, .jitter = 30ms}),
-                     "type the user name");
+    examples::report(
+        input.keyboard.type("PlayerOne_123", {.mode = TextMode::Keystrokes, .delay = 70ms, .jitter = 30ms}),
+        "type the user name");
     examples::report(input.keyboard.tap(Key::Enter), "press Enter");
     return 0;
 }

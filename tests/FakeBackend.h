@@ -17,10 +17,10 @@
 class FakeBackend : public inpututil::Backend {
 public:
     // --- Recording and failure simulation ---------------------------------
-    std::vector<std::vector<INPUT>> batches;  // one entry per sendInput call (accepted events only)
-    std::optional<std::size_t> acceptLimit;   // max events accepted per call
-    std::uint32_t errorCode = 0;              // returned by lastError()
-    std::optional<std::size_t> rejectAfter;   // calls accepted before every later one is rejected
+    std::vector<std::vector<INPUT>> batches;   // one entry per sendInput call (accepted events only)
+    std::optional<std::size_t> acceptLimit;    // max events accepted per call
+    std::uint32_t errorCode = 0;               // returned by lastError()
+    std::optional<std::size_t> rejectAfter;    // calls accepted before every later one is rejected
     std::vector<Clock::time_point> batchTimes; // fake clock at each sendInput call
 
     // --- Screen and cursor --------------------------------------------------
@@ -46,7 +46,7 @@ public:
     // --- Time ---------------------------------------------------------------
     Clock::time_point clock{};
     std::vector<Clock::duration> sleeps;
-    Clock::duration sleepOvershoot{};         // how late every sleep wakes up
+    Clock::duration sleepOvershoot{}; // how late every sleep wakes up
     std::chrono::milliseconds doubleClick{500};
 
     /// vk -> scan code table of a US keyboard exactly as MapVirtualKeyEx
@@ -55,14 +55,19 @@ public:
     /// Pause is 0xE11D.
     void loadUsScanCodes() {
         const char* letters = "QWERTYUIOP";
-        for (int i = 0; i < 10; ++i) vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x10 + i);
+        for (int i = 0; i < 10; ++i)
+            vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x10 + i);
         letters = "ASDFGHJKL";
-        for (int i = 0; i < 9; ++i) vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x1E + i);
+        for (int i = 0; i < 9; ++i)
+            vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x1E + i);
         letters = "ZXCVBNM";
-        for (int i = 0; i < 7; ++i) vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x2C + i);
-        for (int i = 1; i <= 9; ++i) vkToScan[static_cast<std::uint16_t>('0' + i)] = static_cast<std::uint16_t>(0x01 + i);
+        for (int i = 0; i < 7; ++i)
+            vkToScan[static_cast<std::uint16_t>(letters[i])] = static_cast<std::uint16_t>(0x2C + i);
+        for (int i = 1; i <= 9; ++i)
+            vkToScan[static_cast<std::uint16_t>('0' + i)] = static_cast<std::uint16_t>(0x01 + i);
         vkToScan['0'] = 0x0B;
-        for (int i = 0; i < 10; ++i) vkToScan[static_cast<std::uint16_t>(VK_F1 + i)] = static_cast<std::uint16_t>(0x3B + i);
+        for (int i = 0; i < 10; ++i)
+            vkToScan[static_cast<std::uint16_t>(VK_F1 + i)] = static_cast<std::uint16_t>(0x3B + i);
         vkToScan[VK_F11] = 0x57;
         vkToScan[VK_F12] = 0x58;
 
@@ -205,10 +210,13 @@ private:
     void applyMove(const INPUT& in) {
         if (!moveCursor || in.type != INPUT_MOUSE || !(in.mi.dwFlags & MOUSEEVENTF_MOVE)) return;
         if (in.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) {
-            cursor = {toPixel(in.mi.dx, screen.left, screen.width), toPixel(in.mi.dy, screen.top, screen.height)};
+            cursor = {toPixel(in.mi.dx, screen.left, screen.width),
+                      toPixel(in.mi.dy, screen.top, screen.height)};
         } else {
-            cursor.x = std::clamp(cursor.x + static_cast<int>(in.mi.dx), screen.left, screen.left + screen.width - 1);
-            cursor.y = std::clamp(cursor.y + static_cast<int>(in.mi.dy), screen.top, screen.top + screen.height - 1);
+            cursor.x = std::clamp(cursor.x + static_cast<int>(in.mi.dx), screen.left,
+                                  screen.left + screen.width - 1);
+            cursor.y =
+                std::clamp(cursor.y + static_cast<int>(in.mi.dy), screen.top, screen.top + screen.height - 1);
         }
     }
 

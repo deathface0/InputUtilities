@@ -52,7 +52,8 @@ TEST_CASE("easings start at 0, end at 1 and never go backwards") {
     }
     for (const Easing easing : {Easing::SmoothStep, Easing::EaseInOutCubic}) {
         for (const double t : {0.1, 0.25, 0.4}) {
-            CHECK(inpututil::easingValue(easing, 1.0 - t) == doctest::Approx(1.0 - inpututil::easingValue(easing, t)));
+            CHECK(inpututil::easingValue(easing, 1.0 - t) ==
+                  doctest::Approx(1.0 - inpututil::easingValue(easing, t)));
         }
     }
 }
@@ -153,7 +154,9 @@ TEST_CASE("playPath sends every point at its deadline") {
     const auto path = plan({0, 0}, {200, 100}, Motion::linear(100ms));
     const auto start = fake->now();
 
-    const auto absolute = [&](Point, Point next) { return inpututil::detail::makeAbsoluteMove(next, fake->screen); };
+    const auto absolute = [&](Point, Point next) {
+        return inpututil::detail::makeAbsoluteMove(next, fake->screen);
+    };
     REQUIRE(playPath(session, {0, 0}, path, absolute));
 
     REQUIRE(fake->batchTimes.size() == path.size());
@@ -188,7 +191,9 @@ TEST_CASE("playPath stops at the first rejected point") {
     inpututil::detail::Session session(fake, inpututil::kDefaultExtraInfoTag);
     const auto path = plan({0, 0}, {200, 0}, Motion::linear(100ms));
 
-    const auto absolute = [&](Point, Point next) { return inpututil::detail::makeAbsoluteMove(next, fake->screen); };
+    const auto absolute = [&](Point, Point next) {
+        return inpututil::detail::makeAbsoluteMove(next, fake->screen);
+    };
     const auto status = playPath(session, {0, 0}, path, absolute);
     CHECK(status == Error::SystemFailure);
     CHECK(status.win32Error() == ERROR_ACCESS_DENIED);

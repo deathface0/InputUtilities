@@ -46,7 +46,8 @@ std::optional<InputGroup> keystrokeGroup(wchar_t ch, KeyMode mode, Backend& back
 
     const auto vk = static_cast<std::uint16_t>(scan & 0xFF);
     unsigned modifiers = (static_cast<std::uint16_t>(scan) >> 8) & 0xFF;
-    if (vk == 0 || vk == 0xFF || (modifiers & ~(kShift | kCtrl | kAlt)) != 0) return std::nullopt; // Kana, ...
+    // No key, or modifiers beyond Shift/Ctrl/Alt (Kana, ...).
+    if (vk == 0 || vk == 0xFF || (modifiers & ~(kShift | kCtrl | kAlt)) != 0) return std::nullopt;
 
     // With Caps Lock on, letters need the opposite Shift state.
     if (backend.isKeyToggled(VK_CAPITAL) && IsCharAlphaW(ch)) modifiers ^= kShift;

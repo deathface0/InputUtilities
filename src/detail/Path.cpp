@@ -33,8 +33,8 @@ std::vector<PathStep> planPath(Point from, Point to, const Motion& motion, std::
     if (motion.duration <= milliseconds::zero() || from == to) return {{to, nanoseconds::zero()}};
 
     const auto interval = std::max(motion.stepInterval, milliseconds(1));
-    const auto steps = std::max<long long>(
-        1, std::llround(static_cast<double>(motion.duration.count()) / static_cast<double>(interval.count())));
+    const auto steps = std::max<long long>(1, std::llround(static_cast<double>(motion.duration.count()) /
+                                                           static_cast<double>(interval.count())));
 
     const Vec start{static_cast<double>(from.x), static_cast<double>(from.y)};
     const Vec end{static_cast<double>(to.x), static_cast<double>(to.y)};

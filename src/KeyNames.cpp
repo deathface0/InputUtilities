@@ -52,8 +52,8 @@ constexpr NamedKey kAliases[] = {
 char lower(char c) { return static_cast<char>(std::tolower(static_cast<unsigned char>(c))); }
 
 bool iequals(std::string_view a, std::string_view b) {
-    return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(),
-                                              [](char x, char y) { return lower(x) == lower(y); });
+    return a.size() == b.size() &&
+           std::equal(a.begin(), a.end(), b.begin(), [](char x, char y) { return lower(x) == lower(y); });
 }
 
 bool istartsWith(std::string_view text, std::string_view prefix) {

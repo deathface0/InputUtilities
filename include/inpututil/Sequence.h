@@ -69,10 +69,9 @@ struct Wait {
 };
 } // namespace steps
 
-using SequenceStep =
-    std::variant<steps::Invalid, steps::KeyDown, steps::KeyUp, steps::Press, steps::Type, steps::ButtonDown,
-                 steps::ButtonUp, steps::Click, steps::MoveTo, steps::MoveBy, steps::MoveRaw, steps::Scroll,
-                 steps::Wait>;
+using SequenceStep = std::variant<steps::Invalid, steps::KeyDown, steps::KeyUp, steps::Press, steps::Type,
+                                  steps::ButtonDown, steps::ButtonUp, steps::Click, steps::MoveTo,
+                                  steps::MoveBy, steps::MoveRaw, steps::Scroll, steps::Wait>;
 
 } // namespace detail
 

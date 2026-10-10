@@ -241,6 +241,8 @@ ctest --preset msvc-debug
 
 Other presets: `msvc-ninja` (Ninja + MSVC, any Visual Studio version, run from a developer prompt; also generates `compile_commands.json`) and `mingw` (MinGW-w64 GCC). Pass `-DINPUTUTIL_WARNINGS_AS_ERRORS=ON` to treat warnings as errors, as CI does.
 
+Editors that use clangd read the compile commands of `build/msvc-ninja` (see `.clangd`): configure the `msvc-ninja` preset once from a developer prompt, or clangd will report missing headers.
+
 The unit tests use a fake backend and never send real input. Four extra tests start a helper process that dies on purpose (crash, `terminate`, `abort`, `exit`) to check the emergency release; its backend prints the events instead of sending them.
 
 ## Migrating from v1

@@ -72,7 +72,8 @@ TEST_CASE_FIXTURE(Fixture, "a wait splits the batch") {
 TEST_CASE_FIXTURE(Fixture, "a bad step anywhere fails the sequence before anything is sent") {
     CHECK(input.play(Sequence{}.tap(Key::A).wait(10ms).press("Ctrl+foo")) == Error::InvalidArgument);
     CHECK(input.play(Sequence{}.tap(Key::A).type("ok\xFF")) == Error::InvalidArgument);
-    CHECK(input.play(Sequence{}.tap(Key::A).type(L"ñ", {.mode = TextMode::Keystrokes, .fallbackToUnicode = false})) ==
+    CHECK(input.play(Sequence{}.tap(Key::A).type(
+              L"ñ", {.mode = TextMode::Keystrokes, .fallbackToUnicode = false})) ==
           Error::UnmappableCharacter);
     CHECK(input.play(Sequence{}.tap(Key::A).click(inpututil::MouseButton::Left, {.count = 0})) ==
           Error::InvalidArgument);

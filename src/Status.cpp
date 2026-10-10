@@ -21,9 +21,9 @@ namespace {
 
 std::string systemMessage(std::uint32_t code) {
     wchar_t* buffer = nullptr;
-    const DWORD length = FormatMessageW(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
-        code, 0, reinterpret_cast<wchar_t*>(&buffer), 0, nullptr);
+    const DWORD length = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                                            FORMAT_MESSAGE_IGNORE_INSERTS,
+                                        nullptr, code, 0, reinterpret_cast<wchar_t*>(&buffer), 0, nullptr);
     if (length == 0 || buffer == nullptr) return {};
 
     std::wstring wide(buffer, length);

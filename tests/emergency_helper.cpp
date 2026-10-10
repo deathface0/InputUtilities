@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     if (argc < 2) return 2;
     const std::string_view mode = argv[1];
 
-    silenceCrashReporting();             // installed first, so the library chains to it
+    silenceCrashReporting(); // installed first, so the library chains to it
     inpututil::installEmergencyRelease();
 
     inpututil::Input input(

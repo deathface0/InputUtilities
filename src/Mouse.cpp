@@ -130,7 +130,8 @@ Status Mouse::click(MouseButton button, const ClickOptions& options) {
 
         if (const Status status = sendOrRelease(std::span(&downEvent, 1)); !status) return status;
         if (const Status status = session_->wait(options.hold); !status) return status; // aborted: released
-        if (const Status status = session_->send(std::span(&upEvent, 1), detail::SendMode::BestEffort); !status)
+        if (const Status status = session_->send(std::span(&upEvent, 1), detail::SendMode::BestEffort);
+            !status)
             return status;
     }
     return {};
@@ -138,7 +139,8 @@ Status Mouse::click(MouseButton button, const ClickOptions& options) {
 
 Status Mouse::doubleClick(MouseButton button, std::chrono::milliseconds interval) {
     if (!session_) return Error::InvalidArgument;
-    if (interval >= session_->backend().doubleClickTime()) return Error::InvalidArgument; // not a double click
+    // not a double click
+    if (interval >= session_->backend().doubleClickTime()) return Error::InvalidArgument;
     return click(button, {.count = 2, .interval = interval});
 }
 
@@ -183,7 +185,8 @@ Status Mouse::scrollAxis(double notches, std::chrono::milliseconds duration, boo
 
     for (int i = 1; i <= steps; ++i) {
         const int amount = i < steps ? WHEEL_DELTA : magnitude - WHEEL_DELTA * (steps - 1);
-        const auto deadline = start + std::chrono::duration_cast<Backend::Clock::duration>(length * i / steps);
+        const auto deadline =
+            start + std::chrono::duration_cast<Backend::Clock::duration>(length * i / steps);
         if (const Status status = session_->waitUntil(deadline); !status) return status;
 
         const INPUT wheel = detail::makeWheelInput(amount * sign, horizontal);

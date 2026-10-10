@@ -106,7 +106,8 @@ Status Keyboard::type(std::wstring_view text, const TypeOptions& options) {
             pause = options.delay;
             if (rng) {
                 const auto jitter = options.jitter.count();
-                pause += std::chrono::milliseconds(std::uniform_int_distribution<long long>(-jitter, jitter)(*rng));
+                pause += std::chrono::milliseconds(
+                    std::uniform_int_distribution<long long>(-jitter, jitter)(*rng));
             }
         }
         if (const Status status = session_->wait(pause); !status) return status;

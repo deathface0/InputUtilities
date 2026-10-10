@@ -1,6 +1,8 @@
 #include "inpututil/Backend.h"
 
 #include <windows.h>
+
+// timeapi.h needs windows.h first
 #include <timeapi.h>
 
 #ifndef CREATE_WAITABLE_TIMER_HIGH_RESOLUTION

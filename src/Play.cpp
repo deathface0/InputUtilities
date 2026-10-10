@@ -23,9 +23,15 @@ Status validate(const detail::SequenceStep& step, KeyMode mode, Backend& backend
     const auto valid = [](bool ok) -> Status { return ok ? Status{} : Error::InvalidArgument; };
     const auto check = Overloaded{
         [&](const steps::Invalid&) { return valid(false); },
-        [&](const steps::KeyDown& s) { return valid(detail::makeKeyInput(s.key, mode, false, backend).has_value()); },
-        [&](const steps::KeyUp& s) { return valid(detail::makeKeyInput(s.key, mode, true, backend).has_value()); },
-        [&](const steps::Press& s) { return valid(detail::makeComboEvents(s.combo.keys, mode, backend).has_value()); },
+        [&](const steps::KeyDown& s) {
+            return valid(detail::makeKeyInput(s.key, mode, false, backend).has_value());
+        },
+        [&](const steps::KeyUp& s) {
+            return valid(detail::makeKeyInput(s.key, mode, true, backend).has_value());
+        },
+        [&](const steps::Press& s) {
+            return valid(detail::makeComboEvents(s.combo.keys, mode, backend).has_value());
+        },
         [&](const steps::Type& s) {
             std::vector<detail::InputGroup> groups;
             return detail::buildTextGroups(s.text, s.options.mode, s.options.fallbackToUnicode, mode, backend,
@@ -52,7 +58,7 @@ Status Input::play(const Sequence& sequence) {
     if (!sequence.empty())
         if (const Status status = session_->checkAbort(); !status) return status;
 
-    std::vector<INPUT> pending;                    // instant events waiting to go in one batch
+    std::vector<INPUT> pending;                   // instant events waiting to go in one batch
     std::vector<std::pair<INPUT, INPUT>> pressed; // (press, release) of everything this sequence pressed
 
     const auto queueKey = [&](const Key& key, bool down) {
@@ -147,7 +153,8 @@ Status Input::play(const Sequence& sequence) {
         [&](const steps::Scroll& s) -> Status {
             if (s.duration > zero) {
                 if (const Status status = flush(); !status) return status;
-                return s.horizontal ? mouse.scrollHorizontal(s.notches, s.duration) : mouse.scroll(s.notches, s.duration);
+                return s.horizontal ? mouse.scrollHorizontal(s.notches, s.duration)
+                                    : mouse.scroll(s.notches, s.duration);
             }
             if (const int delta = *detail::wheelDelta(s.notches); delta != 0)
                 pending.push_back(detail::makeWheelInput(delta, s.horizontal));

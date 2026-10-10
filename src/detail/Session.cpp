@@ -18,6 +18,7 @@ struct MouseButtonFlags {
     DWORD data; // XBUTTON1/XBUTTON2 for the extra buttons, 0 otherwise
 };
 
+// clang-format off
 constexpr MouseButtonFlags kMouseButtons[] = {
     {MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, 0},
     {MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, 0},
@@ -25,6 +26,7 @@ constexpr MouseButtonFlags kMouseButtons[] = {
     {MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP, XBUTTON1},
     {MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP, XBUTTON2},
 };
+// clang-format on
 
 bool hasButton(const MOUSEINPUT& mi, DWORD flag, DWORD data) {
     if (!(mi.dwFlags & flag)) return false;
@@ -95,7 +97,8 @@ bool Session::isHeld(const INPUT& event) const {
     } else if (event.type == INPUT_MOUSE) {
         for (std::uint32_t i = 0; i < std::size(kMouseButtons); ++i) {
             const MouseButtonFlags& button = kMouseButtons[i];
-            if (hasButton(event.mi, button.down, button.data) || hasButton(event.mi, button.up, button.data)) {
+            if (hasButton(event.mi, button.down, button.data) ||
+                hasButton(event.mi, button.up, button.data)) {
                 id = kMouse | i;
                 break;
             }
@@ -149,7 +152,8 @@ Status Session::sendLocked(std::span<const INPUT> inputs, SendMode mode) {
     if (sent == batch.size()) return {};
 
     const std::uint32_t error = backend_->lastError();
-    if (mode == SendMode::StopOnFailure) return {sent == 0 ? Error::SystemFailure : Error::PartialSend, error};
+    if (mode == SendMode::StopOnFailure)
+        return {sent == 0 ? Error::SystemFailure : Error::PartialSend, error};
 
     // Best effort: retry each rejected event on its own so nothing stays held.
     std::size_t delivered = sent;

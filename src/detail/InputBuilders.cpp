@@ -27,8 +27,7 @@ bool isExtendedVk(std::uint16_t vk) {
     case VK_CANCEL: // Ctrl+Break
     case VK_LWIN:
     case VK_RWIN:
-    case VK_APPS:
-        return true;
+    case VK_APPS: return true;
     default:
         // Browser, volume, media and launch keys
         return vk >= VK_BROWSER_BACK && vk <= VK_LAUNCH_APP2;

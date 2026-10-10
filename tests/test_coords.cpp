@@ -40,7 +40,7 @@ TEST_CASE("every pixel maps back to itself under both rounding models") {
 }
 
 TEST_CASE("the v1 formulas land one pixel short where toAbsolute does not") {
-    const int v1Smooth = (1000 * 65535) / 1920; // v1 smooth SetCursorPos
+    const int v1Smooth = (1000 * 65535) / 1920;  // v1 smooth SetCursorPos
     const int v1Instant = (1000 * 65536) / 1920; // v1 instant SetCursorPos
     CHECK(pixelModelA(v1Smooth, 0, 1920) == 999);
     CHECK(pixelModelB(v1Instant, 0, 1920) == 999);

@@ -42,8 +42,8 @@ TEST_CASE("keys created from scan codes keep their physical position") {
 
 TEST_CASE("extended virtual keys") {
     for (const Key key : {Key::Left, Key::Up, Key::Right, Key::Down, Key::Insert, Key::Delete, Key::Home,
-                          Key::End, Key::PageUp, Key::PageDown, Key::RCtrl, Key::RAlt, Key::LWin, Key::NumLock,
-                          Key::NumpadDivide, Key::PrintScreen, Key::VolumeUp}) {
+                          Key::End, Key::PageUp, Key::PageDown, Key::RCtrl, Key::RAlt, Key::LWin,
+                          Key::NumLock, Key::NumpadDivide, Key::PrintScreen, Key::VolumeUp}) {
         CAPTURE(key.vk());
         CHECK(isExtendedVk(key.vk()));
     }
@@ -121,9 +121,7 @@ TEST_CASE("building key events") {
         CHECK(in->ki.wVk == VK_F20);
         CHECK(in->ki.dwFlags == 0);
     }
-    SUBCASE("invalid key") {
-        CHECK_FALSE(makeKeyInput(Key{}, KeyMode::VirtualKey, false, fake));
-    }
+    SUBCASE("invalid key") { CHECK_FALSE(makeKeyInput(Key{}, KeyMode::VirtualKey, false, fake)); }
 }
 
 TEST_CASE("a key pressed in one mode and released in the other is no longer held") {

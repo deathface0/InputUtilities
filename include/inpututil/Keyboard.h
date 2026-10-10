@@ -86,7 +86,8 @@ private:
     Keyboard(detail::Session* session, KeyMode mode) noexcept : session_(session), mode_(mode) {}
 
     // Used by Input's move operations: takes the session and leaves `other` empty.
-    Keyboard(Keyboard&& other) noexcept : session_(std::exchange(other.session_, nullptr)), mode_(other.mode_) {}
+    Keyboard(Keyboard&& other) noexcept
+        : session_(std::exchange(other.session_, nullptr)), mode_(other.mode_) {}
     Keyboard& operator=(Keyboard&& other) noexcept {
         session_ = std::exchange(other.session_, nullptr);
         mode_ = other.mode_;
